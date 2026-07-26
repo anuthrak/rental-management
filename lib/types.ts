@@ -6,7 +6,7 @@ export type Unit = (typeof UNITS)[number]
 export const CURRENCIES = ["USD", "EUR", "GBP", "KES", "NGN", "ZAR", "INR"] as const
 export type Currency = (typeof CURRENCIES)[number]
 
-export const LANGUAGES = ["en", "sw"] as const
+export const LANGUAGES = ["en", "km"] as const
 export type Language = (typeof LANGUAGES)[number]
 
 export const lineItemSchema = z.object({

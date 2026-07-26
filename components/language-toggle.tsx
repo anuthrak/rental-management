@@ -6,6 +6,10 @@ import { cn } from "@/lib/utils"
 import { LANGUAGES } from "@/lib/types"
 import { useInvoiceStore } from "@/store/use-invoice-store"
 
+const LANGUAGE_DISPLAY: Record<string, string> = {
+  km: "KH",
+}
+
 export function LanguageToggle() {
   const language = useInvoiceStore((s) => s.draft.language)
   const updateDraft = useInvoiceStore((s) => s.updateDraft)
@@ -26,7 +30,7 @@ export function LanguageToggle() {
               : "text-muted-foreground hover:text-foreground",
           )}
         >
-          {lng}
+          {LANGUAGE_DISPLAY[lng] ?? lng}
         </button>
       ))}
     </div>
