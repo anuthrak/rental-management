@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum RoomStatus {
+  VACANT
+  OCCUPIED
+  MAINTENANCE
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PAID
+  OVERDUE
+}
+
+// Price lives on the Room as the current asking price and can change at any
+// time; Lease snapshots the agreed rent separately so past leases/invoices
+// are never affected by later price changes.
+model Room {
+  id          String     @id @default(cuid())
+  roomNumber  String     @unique
+  targetPrice Decimal
+  status      RoomStatus @default(VACANT)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  tenants  Tenant[]
+  leases   Lease[]
+  invoices Invoice[]
+}
+
+// roomId is a denormalized "current room" pointer kept in sync by the
+// assign/end-lease actions. Lease.isActive is the source of truth for
+// occupancy history; dashboard queries derive occupancy from active leases.
+model Tenant {
+  id        String   @id @default(cuid())
+  fullName  String
+  email     String?
+  phone     String?
+  roomId    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  room     Room?     @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  leases   Lease[]
+  invoices Invoice[]
+}
+
+// The contract between a Tenant and a Room. agreedRent is fixed for the
+// lifetime of the lease even if the Room's targetPrice changes later.
+model Lease {
+  id         String    @id @default(cuid())
+  roomId     String
+  tenantId   String
+  agreedRent Decimal
+  startDate  DateTime
+  endDate    DateTime?
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  room     Room      @relation(fields: [roomId], references: [id], onDelete: Restrict)
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  invoices Invoice[]
+
+  @@index([roomId])
+  @@index([tenantId])
+}
+
+// A billing record tracked for the dashboard KPIs. "Overdue" is derived at
+// query time (status = UNPAID and dueDate < now) rather than flipped by a
+// background job, to keep this MVP free of cron jobs.
+model Invoice {
+  id        String        @id @default(cuid())
+  leaseId   String?
+  roomId    String
+  tenantId  String
+  amountDue Decimal
+  dueDate   DateTime
+  status    InvoiceStatus @default(UNPAID)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  lease  Lease? @relation(fields: [leaseId], references: [id], onDelete: SetNull)
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Restrict)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@index([roomId])
+  @@index([leaseId])
+}

@@ -1,7 +1,8 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { Receipt } from "lucide-react"
+import Link from "next/link"
+import { Building2, Receipt } from "lucide-react"
 
 import { useI18n } from "@/components/i18n-provider"
 import { useInvoiceStore } from "@/store/use-invoice-store"
@@ -39,6 +40,13 @@ export function Dashboard() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            href="/dashboard"
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-foreground/70 hover:bg-muted hover:text-foreground"
+          >
+            <Building2 className="size-4" />
+            Dashboard
+          </Link>
           <LanguageToggle />
           <ThemeToggle />
         </div>
