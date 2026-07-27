@@ -4,6 +4,7 @@ import { Inter, Space_Grotesk } from 'next/font/google'
 
 import { ThemeProvider } from '@/components/theme-provider'
 import { I18nProvider } from '@/components/i18n-provider'
+import { GlobalStatusBar } from '@/components/global-status-bar'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
@@ -34,7 +35,7 @@ export const viewport: Viewport = {
   ],
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
@@ -53,6 +54,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <I18nProvider>
+            <GlobalStatusBar />
             {children}
             <Toaster richColors position="top-center" />
           </I18nProvider>

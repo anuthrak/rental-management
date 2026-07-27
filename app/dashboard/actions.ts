@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 
 import { prisma } from "@/lib/prisma"
+import { getSession } from "@/lib/auth/session"
 
 export async function updateRoomTargetPrice(roomId: string, targetPrice: number) {
   await prisma.room.update({
@@ -16,14 +17,17 @@ export async function assignTenant(
   roomId: string,
   input: { fullName: string; phone: string; agreedRent: number },
 ) {
+  const session = await getSession()
+  const userId = session?.userId ?? null
   await prisma.$transaction(async (tx) => {
     const tenant = await tx.tenant.create({
-      data: { fullName: input.fullName, phone: input.phone, roomId },
+      data: { fullName: input.fullName, phone: input.phone, roomId, userId },
     })
     await tx.lease.create({
       data: {
         roomId,
         tenantId: tenant.id,
+        userId,
         agreedRent: input.agreedRent,
         startDate: new Date(),
         isActive: true,
@@ -84,9 +88,15 @@ export async function logMeterReading(input: {
 export async function createRoom(
   input: { roomNumber: string; targetPrice: number },
 ): Promise<{ ok: true } | { ok: false; error: string }> {
+  const session = await getSession()
   try {
     await prisma.room.create({
-      data: { roomNumber: input.roomNumber, targetPrice: input.targetPrice, status: "VACANT" },
+      data: {
+        roomNumber: input.roomNumber,
+        targetPrice: input.targetPrice,
+        status: "VACANT",
+        userId: session?.userId ?? null,
+      },
     })
   } catch {
     return { ok: false, error: "Room number already exists" }
@@ -103,6 +113,7 @@ export async function createInvoiceRecord(input: {
   amountDue: number
   dueDate: string
 }) {
+  const session = await getSession()
   await prisma.invoice.create({
     data: {
       roomId: input.roomId,
@@ -111,6 +122,7 @@ export async function createInvoiceRecord(input: {
       amountDue: input.amountDue,
       dueDate: new Date(input.dueDate),
       status: "UNPAID",
+      userId: session?.userId ?? null,
     },
   })
   revalidatePath("/dashboard")

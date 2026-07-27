@@ -37,9 +37,11 @@ model User {
   email               String   @unique
   name                String?
   passwordHash        String
+  businessName        String?
   currencyPreference  Currency @default(USD)
   defaultWaterRate    Decimal  @default(0.5)
   defaultElectricRate Decimal  @default(0.25)
+  invoiceNoteTemplate String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
@@ -54,7 +56,7 @@ model User {
 // are never affected by later price changes.
 model Room {
   id          String     @id @default(cuid())
-  roomNumber  String     @unique
+  roomNumber  String
   targetPrice Decimal
   status      RoomStatus @default(VACANT)
   userId      String?
@@ -67,6 +69,11 @@ model Room {
   invoices      Invoice[]
   meterReadings MeterReading[]
 
+  // Room numbers only need to be unique within one owner's portfolio — a
+  // global unique would make it impossible for a second registered user to
+  // onboard "Room 101..120" once another account (or the NULL-owned demo
+  // dataset) already has them.
+  @@unique([userId, roomNumber])
   @@index([userId])
 }
 
@@ -74,14 +81,15 @@ model Room {
 // assign/end-lease actions. Lease.isActive is the source of truth for
 // occupancy history; dashboard queries derive occupancy from active leases.
 model Tenant {
-  id        String   @id @default(cuid())
-  fullName  String
-  email     String?
-  phone     String?
-  roomId    String?
-  userId    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  fullName   String
+  email      String?
+  phone      String?
+  nationalId String?
+  roomId     String?
+  userId     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   room     Room?     @relation(fields: [roomId], references: [id], onDelete: SetNull)
   user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -102,6 +110,7 @@ model Lease {
   startDate             DateTime
   endDate               DateTime?
   isActive              Boolean               @default(true)
+  securityDeposit       Decimal?
   securityDepositStatus SecurityDepositStatus @default(HELD)
   createdAt             DateTime              @default(now())
   updatedAt             DateTime              @updatedAt

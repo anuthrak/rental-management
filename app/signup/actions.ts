@@ -34,5 +34,5 @@ export async function signupAction(
 
   await clearDemoMode()
   await createSession(user)
-  redirect("/dashboard")
+  redirect("/onboarding")
 }

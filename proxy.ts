@@ -21,7 +21,9 @@ export async function proxy(request: NextRequest) {
 
 // /dashboard covers both the property dashboard and /dashboard/payments (the
 // live Payments route). /payments and /invoices are matched defensively in
-// case those routes are introduced at the top level later.
+// case those routes are introduced at the top level later. /onboarding lets
+// demo mode through at this layer too, but the page itself requires a real
+// session (onboarding updates a User row, which demo/guest mode doesn't have).
 export const config = {
-  matcher: ["/dashboard/:path*", "/payments/:path*", "/invoices/:path*"],
+  matcher: ["/dashboard/:path*", "/payments/:path*", "/invoices/:path*", "/onboarding/:path*"],
 }
