@@ -2,8 +2,16 @@
 
 import { useMemo } from "react"
 
-import { computeTotals, withAmounts } from "@/lib/calc"
-import { formatCurrency, formatNumber } from "@/lib/currency"
+import {
+  computeTotals,
+  ELECTRIC_RATE_USD,
+  electricCost,
+  usdToKhr,
+  WATER_RATE_USD,
+  waterCost,
+  withAmounts,
+} from "@/lib/calc"
+import { formatCurrency, formatKHR, formatNumber } from "@/lib/currency"
 import { useI18n } from "@/components/i18n-provider"
 import { useInvoiceStore } from "@/store/use-invoice-store"
 
@@ -33,7 +41,13 @@ export function InvoicePreview({
       className="mx-auto flex w-full max-w-xl flex-col overflow-hidden rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10"
     >
       {/* Header band */}
-      <div className="flex items-start justify-between gap-4 bg-primary p-6 text-primary-foreground">
+      <div className="relative flex items-start justify-between gap-4 bg-primary p-6 pt-16 text-primary-foreground">
+        <div
+          className="absolute top-4 right-4 flex h-10 w-24 items-center justify-center rounded-md border border-dashed border-primary-foreground/40 text-[10px] font-medium tracking-wide text-primary-foreground/60 uppercase"
+          aria-hidden
+        >
+          {t("logoPlaceholder")}
+        </div>
         <div className="flex flex-col gap-1">
           <span className="text-xs uppercase tracking-wide text-primary-foreground/70">
             {t("invoiceWord")}
@@ -80,6 +94,14 @@ export function InvoicePreview({
           <span className="text-sm text-muted-foreground">
             {formatDate(draft.endDate, locale)}
           </span>
+          <div className="mt-1.5 flex flex-col gap-0.5">
+            <span className="text-xs text-muted-foreground">
+              {t("issuedLabel")}: {formatDate(draft.issueDate, locale)}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {t("dueLabel")}: {formatDate(draft.dueDate, locale)}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -114,6 +136,27 @@ export function InvoicePreview({
           ))}
         </div>
 
+        {/* Utility usage — reference only, never added to the total */}
+        {(draft.waterUsageM3 > 0 || draft.electricUsageKWh > 0) && (
+          <div className="mt-3 rounded-lg border border-dashed border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+            <p className="mb-1 font-medium text-foreground">{t("utilityNoteTitle")}</p>
+            {draft.waterUsageM3 > 0 && (
+              <p>
+                {t("waterCostNote")}: {formatNumber(draft.waterUsageM3, locale)} m³ ×{" "}
+                {formatCurrency(WATER_RATE_USD, "USD", locale)} ={" "}
+                {formatCurrency(waterCost(draft.waterUsageM3), "USD", locale)}
+              </p>
+            )}
+            {draft.electricUsageKWh > 0 && (
+              <p>
+                {t("electricCostNote")}: {formatNumber(draft.electricUsageKWh, locale)} kWh ×{" "}
+                {formatCurrency(ELECTRIC_RATE_USD, "USD", locale)} ={" "}
+                {formatCurrency(electricCost(draft.electricUsageKWh), "USD", locale)}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Totals */}
         <div className="mt-4 flex flex-col gap-2">
           <div className="flex items-center justify-between text-sm text-muted-foreground">
@@ -124,16 +167,37 @@ export function InvoicePreview({
           </div>
           <div className="flex items-center justify-between rounded-lg bg-accent px-3 py-2.5 text-accent-foreground">
             <span className="font-heading font-medium">{t("total")}</span>
-            <span className="font-heading text-xl font-semibold tabular-nums">
-              {formatCurrency(total, draft.currency, locale)}
-            </span>
+            <div className="text-right">
+              <div className="font-heading text-xl font-semibold tabular-nums">
+                {formatCurrency(total, draft.currency, locale)}
+              </div>
+              {draft.currency === "USD" && (
+                <div className="text-xs font-normal text-accent-foreground/70 tabular-nums">
+                  {t("khrEquivalent")} {formatKHR(usdToKhr(total))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="border-t border-border bg-muted/40 px-6 py-4 text-center text-xs text-muted-foreground">
-        {t("thankYou")}
+      <div className="flex flex-col gap-4 border-t border-border bg-muted/40 px-6 py-4">
+        {draft.notes && (
+          <div className="text-xs text-muted-foreground">
+            <p className="mb-1 font-medium text-foreground">{t("notesLabel")}</p>
+            <p className="whitespace-pre-line">{draft.notes}</p>
+          </div>
+        )}
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-xs text-muted-foreground">{t("thankYou")}</p>
+          <div
+            className="flex h-16 w-32 shrink-0 items-center justify-center rounded-md border border-dashed border-border text-center text-[10px] font-medium tracking-wide text-muted-foreground uppercase"
+            aria-hidden
+          >
+            {t("stampPlaceholder")}
+          </div>
+        </div>
       </div>
     </div>
   )

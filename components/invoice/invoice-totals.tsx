@@ -2,8 +2,8 @@
 
 import { useMemo } from "react"
 
-import { computeTotals } from "@/lib/calc"
-import { formatCurrency } from "@/lib/currency"
+import { computeTotals, usdToKhr } from "@/lib/calc"
+import { formatCurrency, formatKHR } from "@/lib/currency"
 import { useI18n } from "@/components/i18n-provider"
 import { useInvoiceStore } from "@/store/use-invoice-store"
 
@@ -27,9 +27,16 @@ export function InvoiceTotals() {
       </div>
       <div className="flex items-center justify-between">
         <span className="font-heading text-sm font-medium">{t("total")}</span>
-        <span className="font-heading text-2xl font-semibold tabular-nums">
-          {formatCurrency(total, currency, locale)}
-        </span>
+        <div className="text-right">
+          <div className="font-heading text-2xl font-semibold tabular-nums">
+            {formatCurrency(total, currency, locale)}
+          </div>
+          {currency === "USD" && (
+            <div className="text-xs font-normal text-primary-foreground/70 tabular-nums">
+              {t("khrEquivalent")} {formatKHR(usdToKhr(total))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

@@ -7,14 +7,16 @@ import { toast } from "sonner"
 
 import type { DashboardRoom } from "@/lib/db/queries"
 import { formatCurrency } from "@/lib/currency"
+import { useI18n } from "@/components/i18n-provider"
 import { useInvoiceStore, newLineItem } from "@/store/use-invoice-store"
 import {
   assignTenant,
   createInvoiceRecord,
   endLease,
-  markInvoicePaid,
+  setInvoiceStatus,
   updateRoomTargetPrice,
 } from "@/app/dashboard/actions"
+import { MeterReadingSection } from "@/components/dashboard/meter-reading-section"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -54,6 +56,7 @@ export function RoomDrawer({
   onOpenChange: (open: boolean) => void
 }) {
   const router = useRouter()
+  const { t } = useI18n()
   const [isPending, startTransition] = useTransition()
 
   const [cachedRoom, setCachedRoom] = useState(room)
@@ -120,10 +123,10 @@ export function RoomDrawer({
     })
   }
 
-  function handleMarkPaid(invoiceId: string) {
+  function handleToggleInvoiceStatus(invoiceId: string, isPaid: boolean) {
     startTransition(async () => {
-      await markInvoicePaid(invoiceId)
-      toast.success("Invoice marked as paid")
+      await setInvoiceStatus(invoiceId, isPaid ? "UNPAID" : "PAID")
+      toast.success(isPaid ? t("invoiceMarkedUnpaidToast") : t("invoiceMarkedPaidToast"))
     })
   }
 
@@ -164,7 +167,11 @@ export function RoomDrawer({
           <div className="flex items-center justify-between gap-2 pr-8">
             <SheetTitle>{activeRoom.roomNumber}</SheetTitle>
             <Badge variant={activeRoom.status === "OCCUPIED" ? "default" : "secondary"}>
-              {activeRoom.status}
+              {activeRoom.status === "OCCUPIED"
+                ? t("statusOccupied")
+                : activeRoom.status === "VACANT"
+                  ? t("statusVacant")
+                  : t("statusMaintenance")}
             </Badge>
           </div>
           <SheetDescription>Room details and lease management.</SheetDescription>
@@ -191,7 +198,9 @@ export function RoomDrawer({
               <>
                 <span className="text-base font-medium text-foreground">
                   {formatCurrency(activeRoom.targetPrice, "USD")}
-                  <span className="text-xs font-normal text-muted-foreground">/mo target price</span>
+                  <span className="text-xs font-normal text-muted-foreground">
+                    {t("targetPriceSuffix")}
+                  </span>
                 </span>
                 <Button size="icon-xs" variant="ghost" onClick={() => setEditingPrice(true)}>
                   <Pencil />
@@ -204,9 +213,9 @@ export function RoomDrawer({
         <div className="flex flex-col gap-6 overflow-y-auto px-4 pb-4">
           {activeRoom.status === "VACANT" || !activeRoom.tenant ? (
             <form onSubmit={handleAssignTenant} className="flex flex-col gap-4">
-              <h3 className="font-heading text-sm font-medium">Assign a tenant</h3>
+              <h3 className="font-heading text-sm font-medium">{t("assignTenantTitle")}</h3>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="tenant-name">Full name</Label>
+                <Label htmlFor="tenant-name">{t("fullNameField")}</Label>
                 <Input
                   id="tenant-name"
                   value={fullName}
@@ -215,7 +224,7 @@ export function RoomDrawer({
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="tenant-phone">Phone</Label>
+                <Label htmlFor="tenant-phone">{t("phoneField")}</Label>
                 <Input
                   id="tenant-phone"
                   value={phone}
@@ -224,7 +233,7 @@ export function RoomDrawer({
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="tenant-rent">Agreed monthly rent</Label>
+                <Label htmlFor="tenant-rent">{t("agreedRentField")}</Label>
                 <Input
                   id="tenant-rent"
                   type="number"
@@ -235,13 +244,13 @@ export function RoomDrawer({
                 />
               </div>
               <Button type="submit" disabled={isPending}>
-                Assign tenant &amp; mark occupied
+                {t("assignTenantAction")}
               </Button>
             </form>
           ) : (
             <>
               <div className="flex flex-col gap-2">
-                <h3 className="font-heading text-sm font-medium">Tenant</h3>
+                <h3 className="font-heading text-sm font-medium">{t("tenantSection")}</h3>
                 <div className="rounded-lg border border-border p-3 text-sm">
                   <div className="font-medium">{activeRoom.tenant.fullName}</div>
                   {activeRoom.tenant.phone && (
@@ -262,7 +271,7 @@ export function RoomDrawer({
                 <>
                   <Separator />
                   <div className="flex flex-col gap-2">
-                    <h3 className="font-heading text-sm font-medium">Invoices</h3>
+                    <h3 className="font-heading text-sm font-medium">{t("invoicesSection")}</h3>
                     <div className="flex flex-col gap-2">
                       {activeRoom.invoices.map((invoice) => {
                         const isPaid = invoice.status === "PAID"
@@ -281,17 +290,16 @@ export function RoomDrawer({
                             </div>
                             <div className="flex items-center gap-2">
                               <Badge variant={isPaid ? "secondary" : invoice.isOverdue ? "destructive" : "outline"}>
-                                {isPaid ? "Paid" : invoice.isOverdue ? "Overdue" : "Unpaid"}
+                                {isPaid ? t("paidStatus") : invoice.isOverdue ? t("overdueStatus") : t("unpaidStatus")}
                               </Badge>
-                              {!isPaid && (
-                                <Button
-                                  size="sm"
-                                  disabled={isPending}
-                                  onClick={() => handleMarkPaid(invoice.id)}
-                                >
-                                  Mark as Paid
-                                </Button>
-                              )}
+                              <Button
+                                size="sm"
+                                variant={isPaid ? "outline" : "default"}
+                                disabled={isPending}
+                                onClick={() => handleToggleInvoiceStatus(invoice.id, isPaid)}
+                              >
+                                {isPaid ? t("markUnpaidAction") : t("markPaidAction")}
+                              </Button>
                             </div>
                           </div>
                         )
@@ -303,11 +311,15 @@ export function RoomDrawer({
 
               <Separator />
 
+              <MeterReadingSection roomId={activeRoom.id} readings={activeRoom.meterReadings} />
+
+              <Separator />
+
               {showInvoiceForm ? (
                 <form onSubmit={handleGenerateInvoice} className="flex flex-col gap-4">
                   <h3 className="font-heading text-sm font-medium">Generate invoice</h3>
                   <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="invoice-amount">Invoice total</Label>
+                    <Label htmlFor="invoice-amount">{t("invoiceTotalField")}</Label>
                     <Input
                       id="invoice-amount"
                       type="number"
@@ -318,7 +330,7 @@ export function RoomDrawer({
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="invoice-due">Due date</Label>
+                    <Label htmlFor="invoice-due">{t("dueDateField")}</Label>
                     <Input
                       id="invoice-due"
                       type="date"
@@ -329,10 +341,10 @@ export function RoomDrawer({
                   <div className="flex gap-2">
                     <Button type="submit" disabled={isPending} className="flex-1">
                       <Receipt data-icon="inline-start" />
-                      Continue to invoice
+                      {t("continueToInvoice")}
                     </Button>
                     <Button type="button" variant="outline" onClick={() => setShowInvoiceForm(false)}>
-                      Cancel
+                      {t("cancel")}
                     </Button>
                   </div>
                 </form>
@@ -340,22 +352,22 @@ export function RoomDrawer({
                 <div className="flex flex-col gap-2">
                   <Button onClick={() => setShowInvoiceForm(true)}>
                     <Receipt data-icon="inline-start" />
-                    Generate Invoice
+                    {t("generateInvoiceAction")}
                   </Button>
                   <AlertDialog open={endLeaseConfirmOpen} onOpenChange={setEndLeaseConfirmOpen}>
                     <Button variant="outline" onClick={() => setEndLeaseConfirmOpen(true)}>
-                      End Lease / Mark Vacant
+                      {t("endLeaseAction")}
                     </Button>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>End this lease?</AlertDialogTitle>
+                        <AlertDialogTitle>{t("endLeaseTitle")}</AlertDialogTitle>
                         <AlertDialogDescription>
                           {activeRoom.tenant.fullName} will be removed from {activeRoom.roomNumber} and the
                           room will be marked vacant. Past invoices are kept.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
                         <AlertDialogAction variant="destructive" disabled={isPending} onClick={handleEndLease}>
                           End lease
                         </AlertDialogAction>

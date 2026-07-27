@@ -6,6 +6,15 @@ import { persist } from "zustand/middleware"
 import type { Invoice, LineItem, Unit } from "@/lib/types"
 import { invoiceSchema } from "@/lib/types"
 import { formatInvoiceNumber, nextInvoiceNumber } from "@/lib/invoice-number"
+import { SECURITY_FEE_AMOUNT, SECURITY_FEE_ID } from "@/lib/calc"
+
+const NOTES_PLACEHOLDER = [
+  "Payment is due within 7 days of the invoice date.",
+  "Late payments may incur an additional fee.",
+  "Please make checks payable to the business name above.",
+  "For questions about this invoice, contact the office.",
+  "Thank you for being a valued tenant.",
+].join("\n")
 
 function uid(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -36,9 +45,14 @@ function makeDraft(invoiceNumber = formatInvoiceNumber(1)): Draft {
     nationalId: "",
     startDate: firstOfMonth(),
     endDate: today(),
+    issueDate: today(),
+    dueDate: today(),
     currency: "USD",
     language: "en",
     lineItems: [],
+    notes: NOTES_PLACEHOLDER,
+    waterUsageM3: 0,
+    electricUsageKWh: 0,
   }
 }
 
@@ -65,6 +79,8 @@ interface InvoiceState {
   addLineItem: (partial?: Partial<LineItem>) => void
   updateLineItem: (id: string, patch: Partial<LineItem>) => void
   removeLineItem: (id: string) => void
+  moveLineItem: (fromIndex: number, toIndex: number) => void
+  toggleSecurityFee: (label: string) => void
   resetDraft: () => void
   saveInvoice: () => Invoice
   loadInvoice: (id: string) => void
@@ -126,6 +142,43 @@ export const useInvoiceStore = create<InvoiceState>()(
             lineItems: s.draft.lineItems.filter((item) => item.id !== id),
           },
         })),
+      moveLineItem: (fromIndex, toIndex) =>
+        set((s) => {
+          const items = [...s.draft.lineItems]
+          if (
+            fromIndex < 0 ||
+            fromIndex >= items.length ||
+            toIndex < 0 ||
+            toIndex >= items.length
+          ) {
+            return s
+          }
+          const [moved] = items.splice(fromIndex, 1)
+          items.splice(toIndex, 0, moved)
+          return { draft: { ...s.draft, lineItems: items } }
+        }),
+      toggleSecurityFee: (label) =>
+        set((s) => {
+          const exists = s.draft.lineItems.some((item) => item.id === SECURITY_FEE_ID)
+          return {
+            errors: {},
+            draft: {
+              ...s.draft,
+              lineItems: exists
+                ? s.draft.lineItems.filter((item) => item.id !== SECURITY_FEE_ID)
+                : [
+                    ...s.draft.lineItems,
+                    {
+                      id: SECURITY_FEE_ID,
+                      label,
+                      quantity: 1,
+                      unit: "$" as Unit,
+                      rate: SECURITY_FEE_AMOUNT,
+                    },
+                  ],
+            },
+          }
+        }),
       resetDraft: () =>
         set((s) => ({
           draft: {

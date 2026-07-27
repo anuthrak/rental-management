@@ -1,10 +1,11 @@
 "use client"
 
-import { Plus, Trash2 } from "lucide-react"
+import { useState } from "react"
+import { GripVertical, Plus, ShieldCheck, Trash2 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { UNITS, type Unit } from "@/lib/types"
-import { lineAmount } from "@/lib/calc"
+import { lineAmount, SECURITY_FEE_ID } from "@/lib/calc"
 import { formatCurrency } from "@/lib/currency"
 import { useI18n } from "@/components/i18n-provider"
 import { useInvoiceStore } from "@/store/use-invoice-store"
@@ -33,6 +34,12 @@ export function LineItemTable() {
   const addLineItem = useInvoiceStore((s) => s.addLineItem)
   const updateLineItem = useInvoiceStore((s) => s.updateLineItem)
   const removeLineItem = useInvoiceStore((s) => s.removeLineItem)
+  const moveLineItem = useInvoiceStore((s) => s.moveLineItem)
+  const toggleSecurityFee = useInvoiceStore((s) => s.toggleSecurityFee)
+
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null)
+
+  const hasSecurityFee = lineItems.some((item) => item.id === SECURITY_FEE_ID)
 
   const presets: Preset[] = [
     { key: "presetRoom", label: t("presetRoom"), unit: "month" },
@@ -42,6 +49,13 @@ export function LineItemTable() {
     { key: "presetSanitation", label: t("presetSanitation"), unit: "unit" },
     { key: "presetWifi", label: t("presetWifi"), unit: "month" },
   ]
+
+  function handleDrop(targetIndex: number) {
+    if (draggingIndex !== null && draggingIndex !== targetIndex) {
+      moveLineItem(draggingIndex, targetIndex)
+    }
+    setDraggingIndex(null)
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -64,18 +78,31 @@ export function LineItemTable() {
               {preset.label}
             </Button>
           ))}
+          <Button
+            type="button"
+            variant={hasSecurityFee ? "default" : "outline"}
+            size="sm"
+            aria-pressed={hasSecurityFee}
+            onClick={() => toggleSecurityFee(t("securityFee"))}
+          >
+            <ShieldCheck data-icon="inline-start" />
+            {t("includeSecurityFee")}
+          </Button>
         </div>
       </div>
 
       {/* Column headers (desktop) */}
       {lineItems.length > 0 && (
-        <div className="hidden grid-cols-[1fr_5rem_5.5rem_6rem_6rem_2rem] items-center gap-2 px-1 text-xs font-medium text-muted-foreground md:grid">
-          <span>{t("label")}</span>
-          <span className="text-right">{t("quantity")}</span>
-          <span>{t("unit")}</span>
-          <span className="text-right">{t("rate")}</span>
-          <span className="text-right">{t("amount")}</span>
-          <span className="sr-only">Remove</span>
+        <div className="hidden items-center gap-1.5 px-1 text-xs font-medium text-muted-foreground md:flex">
+          <span className="sr-only size-4 shrink-0">{t("dragToReorder")}</span>
+          <div className="grid flex-1 grid-cols-[1fr_5rem_5.5rem_6rem_6rem_2rem] gap-2">
+            <span>{t("label")}</span>
+            <span className="text-right">{t("quantity")}</span>
+            <span>{t("unit")}</span>
+            <span className="text-right">{t("rate")}</span>
+            <span className="text-right">{t("amount")}</span>
+            <span className="sr-only">Remove</span>
+          </div>
         </div>
       )}
 
@@ -91,10 +118,24 @@ export function LineItemTable() {
           return (
             <div
               key={item.id}
+              draggable
+              onDragStart={() => setDraggingIndex(index)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={() => handleDrop(index)}
+              onDragEnd={() => setDraggingIndex(null)}
               className={cn(
-                "grid grid-cols-2 gap-2 rounded-lg border border-border p-3 md:grid-cols-[1fr_5rem_5.5rem_6rem_6rem_2rem] md:items-center md:rounded-none md:border-0 md:p-0",
+                "flex items-start gap-1.5 rounded-lg border border-border p-3 md:items-center md:rounded-none md:border-0 md:p-0",
+                draggingIndex === index && "opacity-40",
               )}
             >
+              <div
+                className="flex h-8 shrink-0 cursor-grab items-center justify-center text-muted-foreground active:cursor-grabbing"
+                aria-label={t("dragToReorder")}
+              >
+                <GripVertical className="size-4" />
+              </div>
+
+              <div className="grid flex-1 grid-cols-2 gap-2 md:grid-cols-[1fr_5rem_5.5rem_6rem_6rem_2rem] md:items-center">
               <div className="col-span-2 md:col-span-1">
                 <Label
                   htmlFor={`label-${item.id}`}
@@ -202,6 +243,7 @@ export function LineItemTable() {
                 >
                   <Trash2 className="text-destructive" />
                 </Button>
+              </div>
               </div>
             </div>
           )

@@ -9,6 +9,14 @@ export type RoomInvoice = {
   isOverdue: boolean
 }
 
+export type MeterReadingItem = {
+  id: string
+  readingDate: Date
+  waterMeterValue: number
+  electricMeterValue: number
+  notes: string | null
+}
+
 export type DashboardRoom = {
   id: string
   roomNumber: string
@@ -22,6 +30,7 @@ export type DashboardRoom = {
     email: string | null
   } | null
   invoices: RoomInvoice[]
+  meterReadings: MeterReadingItem[]
 }
 
 export async function getRooms(): Promise<DashboardRoom[]> {
@@ -31,6 +40,7 @@ export async function getRooms(): Promise<DashboardRoom[]> {
     include: {
       leases: { where: { isActive: true }, take: 1, include: { tenant: true } },
       invoices: { orderBy: { dueDate: "desc" } },
+      meterReadings: { orderBy: { readingDate: "desc" }, take: 12 },
     },
   })
 
@@ -56,6 +66,13 @@ export async function getRooms(): Promise<DashboardRoom[]> {
         dueDate: invoice.dueDate,
         status: invoice.status,
         isOverdue: invoice.status === "UNPAID" && invoice.dueDate < now,
+      })),
+      meterReadings: room.meterReadings.map((reading) => ({
+        id: reading.id,
+        readingDate: reading.readingDate,
+        waterMeterValue: reading.waterMeterValue.toNumber(),
+        electricMeterValue: reading.electricMeterValue.toNumber(),
+        notes: reading.notes,
       })),
     }
   })

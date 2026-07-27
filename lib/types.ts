@@ -28,9 +28,14 @@ export const invoiceSchema = z
     nationalId: z.string(),
     startDate: z.string().min(1, "Start date is required"),
     endDate: z.string().min(1, "End date is required"),
+    issueDate: z.string().min(1, "Issue date is required"),
+    dueDate: z.string().min(1, "Due date is required"),
     currency: z.enum(CURRENCIES),
     language: z.enum(LANGUAGES),
     lineItems: z.array(lineItemSchema).min(1, "Add at least one line item"),
+    notes: z.string(),
+    waterUsageM3: z.number().min(0, "Must be 0 or more"),
+    electricUsageKWh: z.number().min(0, "Must be 0 or more"),
     createdAt: z.string(),
   })
   .refine((v) => new Date(v.endDate) >= new Date(v.startDate), {

@@ -4,14 +4,17 @@ import { useMemo, useState } from "react"
 import { Search } from "lucide-react"
 
 import type { DashboardRoom } from "@/lib/db/queries"
+import { useI18n } from "@/components/i18n-provider"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { AddRoomCard } from "@/components/dashboard/add-room-card"
 import { RoomCard } from "@/components/dashboard/room-card"
 import { RoomDrawer } from "@/components/dashboard/room-drawer"
 
 type FilterTab = "all" | "vacant" | "occupied"
 
 export function RoomGrid({ rooms }: { rooms: DashboardRoom[] }) {
+  const { t } = useI18n()
   const [query, setQuery] = useState("")
   const [tab, setTab] = useState<FilterTab>("all")
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
@@ -39,15 +42,15 @@ export function RoomGrid({ rooms }: { rooms: DashboardRoom[] }) {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search room or tenant..."
+            placeholder={t("searchRoomTenant")}
             className="pl-8"
           />
         </div>
         <Tabs value={tab} onValueChange={(v) => setTab(v as FilterTab)}>
           <TabsList>
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="vacant">Vacant</TabsTrigger>
-            <TabsTrigger value="occupied">Occupied</TabsTrigger>
+            <TabsTrigger value="all">{t("tabAll")}</TabsTrigger>
+            <TabsTrigger value="vacant">{t("tabVacant")}</TabsTrigger>
+            <TabsTrigger value="occupied">{t("tabOccupied")}</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -58,9 +61,10 @@ export function RoomGrid({ rooms }: { rooms: DashboardRoom[] }) {
         ))}
         {filtered.length === 0 && (
           <p className="col-span-full py-10 text-center text-sm text-muted-foreground">
-            No rooms match your search.
+            {t("noRoomsMatch")}
           </p>
         )}
+        <AddRoomCard />
       </div>
 
       <RoomDrawer

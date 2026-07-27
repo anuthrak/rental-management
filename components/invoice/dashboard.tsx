@@ -45,7 +45,7 @@ export function Dashboard() {
             className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-foreground/70 hover:bg-muted hover:text-foreground"
           >
             <Building2 className="size-4" />
-            Dashboard
+            {t("navDashboard")}
           </Link>
           <LanguageToggle />
           <ThemeToggle />

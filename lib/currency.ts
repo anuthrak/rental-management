@@ -20,3 +20,16 @@ export function formatNumber(value: number, locale = "en-US"): string {
     maximumFractionDigits: 2,
   }).format(value || 0)
 }
+
+// Riel is conventionally shown with no decimal places.
+export function formatKHR(amountKhr: number): string {
+  try {
+    return new Intl.NumberFormat("km-KH", {
+      style: "currency",
+      currency: "KHR",
+      maximumFractionDigits: 0,
+    }).format(amountKhr || 0)
+  } catch {
+    return `KHR ${Math.round(amountKhr || 0)}`
+  }
+}

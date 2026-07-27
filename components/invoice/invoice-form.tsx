@@ -1,8 +1,10 @@
 "use client"
 
-import { Building2, CalendarRange, ReceiptText, User } from "lucide-react"
+import { Building2, CalendarRange, Droplets, NotebookPen, ReceiptText, User } from "lucide-react"
 
 import { CURRENCIES, type Currency } from "@/lib/types"
+import { electricCost, waterCost } from "@/lib/calc"
+import { formatCurrency } from "@/lib/currency"
 import { useI18n } from "@/components/i18n-provider"
 import { useInvoiceStore } from "@/store/use-invoice-store"
 import { LineItemTable } from "@/components/invoice/line-item-table"
@@ -11,6 +13,7 @@ import { FormActions } from "@/components/invoice/form-actions"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -83,9 +86,12 @@ export function InvoiceForm({
 }: {
   previewRef: React.RefObject<HTMLDivElement | null>
 }) {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const currency = useInvoiceStore((s) => s.draft.currency)
   const updateDraft = useInvoiceStore((s) => s.updateDraft)
+  const waterUsageM3 = useInvoiceStore((s) => s.draft.waterUsageM3)
+  const electricUsageKWh = useInvoiceStore((s) => s.draft.electricUsageKWh)
+  const notes = useInvoiceStore((s) => s.draft.notes)
 
   return (
     <div className="flex flex-col gap-6">
@@ -169,7 +175,67 @@ export function InvoiceForm({
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField id="startDate" label={t("startDate")} type="date" />
           <FormField id="endDate" label={t("endDate")} type="date" />
+          <FormField id="issueDate" label={t("issueDate")} type="date" />
+          <FormField id="dueDate" label={t("dueDateField")} type="date" />
         </div>
+      </section>
+
+      <Separator />
+
+      {/* Utility usage (reference only — excluded from the grand total) */}
+      <section className="flex flex-col gap-4">
+        <SectionHeading icon={Droplets}>{t("utilityUsage")}</SectionHeading>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="waterUsage">{t("waterUsageLabel")}</Label>
+            <Input
+              id="waterUsage"
+              type="number"
+              min={0}
+              step="any"
+              inputMode="decimal"
+              value={waterUsageM3}
+              onChange={(e) =>
+                updateDraft({
+                  waterUsageM3: e.target.value === "" ? 0 : Number(e.target.value),
+                })
+              }
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="electricUsage">{t("electricUsageLabel")}</Label>
+            <Input
+              id="electricUsage"
+              type="number"
+              min={0}
+              step="any"
+              inputMode="decimal"
+              value={electricUsageKWh}
+              onChange={(e) =>
+                updateDraft({
+                  electricUsageKWh: e.target.value === "" ? 0 : Number(e.target.value),
+                })
+              }
+            />
+          </div>
+        </div>
+        {(waterUsageM3 > 0 || electricUsageKWh > 0) && (
+          <p className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
+            {waterUsageM3 > 0 && (
+              <>
+                {t("waterCostNote")}: {formatCurrency(waterCost(waterUsageM3), "USD", locale)}
+                {electricUsageKWh > 0 && " · "}
+              </>
+            )}
+            {electricUsageKWh > 0 && (
+              <>
+                {t("electricCostNote")}: {formatCurrency(electricCost(electricUsageKWh), "USD", locale)}
+              </>
+            )}
+            {" — "}
+            {t("utilityNoteTitle")}
+          </p>
+        )}
       </section>
 
       <Separator />
@@ -184,6 +250,17 @@ export function InvoiceForm({
       </section>
 
       <InvoiceTotals />
+
+      {/* Notes */}
+      <section className="flex flex-col gap-4">
+        <SectionHeading icon={NotebookPen}>{t("notesLabel")}</SectionHeading>
+        <Textarea
+          id="notes"
+          rows={5}
+          value={notes}
+          onChange={(e) => updateDraft({ notes: e.target.value })}
+        />
+      </section>
 
       <FormActions previewRef={previewRef} />
     </div>

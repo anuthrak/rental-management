@@ -29,9 +29,10 @@ model Room {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  tenants  Tenant[]
-  leases   Lease[]
-  invoices Invoice[]
+  tenants       Tenant[]
+  leases        Lease[]
+  invoices      Invoice[]
+  meterReadings MeterReading[]
 }
 
 // roomId is a denormalized "current room" pointer kept in sync by the
@@ -92,4 +93,20 @@ model Invoice {
 
   @@index([roomId])
   @@index([leaseId])
+}
+
+// Logs water/electric meter values over time so consumption between two
+// readings can be derived (currentValue - previous reading's value).
+model MeterReading {
+  id                 String   @id @default(cuid())
+  roomId             String
+  readingDate        DateTime @default(now())
+  waterMeterValue    Decimal
+  electricMeterValue Decimal
+  notes              String?
+  createdAt          DateTime @default(now())
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId])
 }

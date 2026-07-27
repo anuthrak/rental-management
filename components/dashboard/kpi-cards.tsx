@@ -1,7 +1,10 @@
+"use client"
+
 import { AlertTriangle, DollarSign, DoorOpen, ReceiptText } from "lucide-react"
 
 import type { DashboardMetrics } from "@/lib/db/queries"
 import { formatCurrency } from "@/lib/currency"
+import { useI18n } from "@/components/i18n-provider"
 import { Card, CardContent } from "@/components/ui/card"
 
 function KpiCard({
@@ -32,27 +35,28 @@ function KpiCard({
 }
 
 export function KpiCards({ metrics }: { metrics: DashboardMetrics }) {
+  const { t } = useI18n()
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <KpiCard
         icon={DoorOpen}
-        label="Occupancy Rate"
+        label={t("kpiOccupancy")}
         value={`${metrics.occupiedCount} / ${metrics.totalRooms}`}
-        sub={`${metrics.occupancyRate}% occupied`}
+        sub={`${metrics.occupancyRate}% ${t("kpiOccupied")}`}
       />
       <KpiCard
         icon={DollarSign}
-        label="Rent Collected (This Month)"
+        label={t("kpiRentCollected")}
         value={formatCurrency(metrics.totalCollectedThisMonth, "USD")}
       />
       <KpiCard
         icon={AlertTriangle}
-        label="Overdue Rent (This Month)"
+        label={t("kpiOverdueRent")}
         value={formatCurrency(metrics.totalOverdueThisMonth, "USD")}
       />
       <KpiCard
         icon={ReceiptText}
-        label="Overdue Invoices"
+        label={t("kpiOverdueInvoices")}
         value={String(metrics.overdueInvoiceCount)}
       />
     </div>

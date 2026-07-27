@@ -55,13 +55,45 @@ export async function endLease(leaseId: string, roomId: string, tenantId: string
   revalidatePath("/dashboard")
 }
 
-export async function markInvoicePaid(invoiceId: string) {
+export async function setInvoiceStatus(invoiceId: string, status: "PAID" | "UNPAID") {
   await prisma.invoice.update({
     where: { id: invoiceId },
-    data: { status: "PAID" },
+    data: { status },
   })
   revalidatePath("/dashboard")
   revalidatePath("/dashboard/payments")
+}
+
+export async function logMeterReading(input: {
+  roomId: string
+  waterMeterValue: number
+  electricMeterValue: number
+  notes?: string
+}) {
+  await prisma.meterReading.create({
+    data: {
+      roomId: input.roomId,
+      waterMeterValue: input.waterMeterValue,
+      electricMeterValue: input.electricMeterValue,
+      notes: input.notes?.trim() ? input.notes.trim() : null,
+    },
+  })
+  revalidatePath("/dashboard")
+}
+
+export async function createRoom(
+  input: { roomNumber: string; targetPrice: number },
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    await prisma.room.create({
+      data: { roomNumber: input.roomNumber, targetPrice: input.targetPrice, status: "VACANT" },
+    })
+  } catch {
+    return { ok: false, error: "Room number already exists" }
+  }
+  revalidatePath("/dashboard")
+  revalidatePath("/dashboard/payments")
+  return { ok: true }
 }
 
 export async function createInvoiceRecord(input: {
