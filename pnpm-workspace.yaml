@@ -5,5 +5,12 @@ allowBuilds:
   prisma: true
   sharp: true
 
+onlyBuiltDependencies:
+  - '@prisma/engines'
+  - core-js
+  - esbuild
+  - prisma
+  - sharp
+
 overrides:
   hono: 4.12.25
