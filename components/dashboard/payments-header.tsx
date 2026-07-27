@@ -1,11 +1,13 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowLeft, Wallet } from "lucide-react"
+import { ArrowLeft, LogOut, Wallet } from "lucide-react"
 
+import { logoutAction } from "@/app/login/actions"
 import { useI18n } from "@/components/i18n-provider"
 import { LanguageToggle } from "@/components/language-toggle"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { Button } from "@/components/ui/button"
 
 export function PaymentsHeader() {
   const { t } = useI18n()
@@ -30,6 +32,11 @@ export function PaymentsHeader() {
         </Link>
         <LanguageToggle />
         <ThemeToggle />
+        <form action={logoutAction}>
+          <Button type="submit" variant="ghost" size="icon" aria-label="Log out">
+            <LogOut />
+          </Button>
+        </form>
       </div>
     </header>
   )

@@ -18,6 +18,37 @@ enum InvoiceStatus {
   OVERDUE
 }
 
+enum SecurityDepositStatus {
+  HELD
+  REFUNDED
+  APPLIED_TO_RENT
+}
+
+enum Currency {
+  USD
+  KHR
+}
+
+// A registered account. Rows across Room/Tenant/Lease/Invoice with a NULL
+// userId are shared public demo data (see getScopedData in lib/db/queries.ts);
+// rows owned by a User are private to that account.
+model User {
+  id                  String   @id @default(cuid())
+  email               String   @unique
+  name                String?
+  passwordHash        String
+  currencyPreference  Currency @default(USD)
+  defaultWaterRate    Decimal  @default(0.5)
+  defaultElectricRate Decimal  @default(0.25)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  rooms    Room[]
+  tenants  Tenant[]
+  leases   Lease[]
+  invoices Invoice[]
+}
+
 // Price lives on the Room as the current asking price and can change at any
 // time; Lease snapshots the agreed rent separately so past leases/invoices
 // are never affected by later price changes.
@@ -26,13 +57,17 @@ model Room {
   roomNumber  String     @unique
   targetPrice Decimal
   status      RoomStatus @default(VACANT)
+  userId      String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
+  user          User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
   tenants       Tenant[]
   leases        Lease[]
   invoices      Invoice[]
   meterReadings MeterReading[]
+
+  @@index([userId])
 }
 
 // roomId is a denormalized "current room" pointer kept in sync by the
@@ -44,33 +79,41 @@ model Tenant {
   email     String?
   phone     String?
   roomId    String?
+  userId    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   room     Room?     @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   leases   Lease[]
   invoices Invoice[]
+
+  @@index([userId])
 }
 
 // The contract between a Tenant and a Room. agreedRent is fixed for the
 // lifetime of the lease even if the Room's targetPrice changes later.
 model Lease {
-  id         String    @id @default(cuid())
-  roomId     String
-  tenantId   String
-  agreedRent Decimal
-  startDate  DateTime
-  endDate    DateTime?
-  isActive   Boolean   @default(true)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id                    String                @id @default(cuid())
+  roomId                String
+  tenantId              String
+  userId                String?
+  agreedRent            Decimal
+  startDate             DateTime
+  endDate               DateTime?
+  isActive              Boolean               @default(true)
+  securityDepositStatus SecurityDepositStatus @default(HELD)
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
 
   room     Room      @relation(fields: [roomId], references: [id], onDelete: Restrict)
   tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   invoices Invoice[]
 
   @@index([roomId])
   @@index([tenantId])
+  @@index([userId])
 }
 
 // A billing record tracked for the dashboard KPIs. "Overdue" is derived at
@@ -81,6 +124,7 @@ model Invoice {
   leaseId   String?
   roomId    String
   tenantId  String
+  userId    String?
   amountDue Decimal
   dueDate   DateTime
   status    InvoiceStatus @default(UNPAID)
@@ -90,9 +134,11 @@ model Invoice {
   lease  Lease? @relation(fields: [leaseId], references: [id], onDelete: SetNull)
   room   Room   @relation(fields: [roomId], references: [id], onDelete: Restrict)
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([roomId])
   @@index([leaseId])
+  @@index([userId])
 }
 
 // Logs water/electric meter values over time so consumption between two

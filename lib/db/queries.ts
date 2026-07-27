@@ -1,6 +1,12 @@
 import { prisma } from "@/lib/prisma"
 import type { InvoiceStatus, RoomStatus } from "@prisma/client"
 
+// A NULL userId is the shared public demo dataset; a specific userId scopes
+// to that registered account's own rows. Pass this into a query's `where`.
+export function getScopedData(userId: string | null): { userId: string | null } {
+  return { userId }
+}
+
 export type RoomInvoice = {
   id: string
   amountDue: number
@@ -33,9 +39,10 @@ export type DashboardRoom = {
   meterReadings: MeterReadingItem[]
 }
 
-export async function getRooms(): Promise<DashboardRoom[]> {
+export async function getRooms(userId?: string | null): Promise<DashboardRoom[]> {
   const now = new Date()
   const rooms = await prisma.room.findMany({
+    where: userId !== undefined ? getScopedData(userId) : undefined,
     orderBy: { roomNumber: "asc" },
     include: {
       leases: { where: { isActive: true }, take: 1, include: { tenant: true } },
@@ -89,9 +96,10 @@ export type DashboardInvoice = {
   tenantName: string
 }
 
-export async function getInvoices(): Promise<DashboardInvoice[]> {
+export async function getInvoices(userId?: string | null): Promise<DashboardInvoice[]> {
   const now = new Date()
   const invoices = await prisma.invoice.findMany({
+    where: userId !== undefined ? getScopedData(userId) : undefined,
     orderBy: { dueDate: "desc" },
     include: { room: true, tenant: true },
   })
@@ -119,27 +127,28 @@ export type DashboardMetrics = {
 
 // "Overdue" is derived at query time (UNPAID + past due date) rather than a
 // background job flipping status to OVERDUE, to keep this MVP cron-free.
-export async function getDashboardMetrics(): Promise<DashboardMetrics> {
+export async function getDashboardMetrics(userId?: string | null): Promise<DashboardMetrics> {
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+  const scope = userId !== undefined ? getScopedData(userId) : {}
   const overdueClause = {
     OR: [{ status: "OVERDUE" as const }, { status: "UNPAID" as const, dueDate: { lt: now } }],
   }
 
   const [totalRooms, occupiedCount, paidThisMonth, overdueThisMonth, overdueAll] = await Promise.all([
-    prisma.room.count(),
-    prisma.room.count({ where: { status: "OCCUPIED" } }),
+    prisma.room.count({ where: scope }),
+    prisma.room.count({ where: { ...scope, status: "OCCUPIED" } }),
     prisma.invoice.findMany({
-      where: { status: "PAID", dueDate: { gte: monthStart, lt: monthEnd } },
+      where: { ...scope, status: "PAID", dueDate: { gte: monthStart, lt: monthEnd } },
       select: { amountDue: true },
     }),
     prisma.invoice.findMany({
-      where: { dueDate: { gte: monthStart, lt: monthEnd }, ...overdueClause },
+      where: { ...scope, dueDate: { gte: monthStart, lt: monthEnd }, ...overdueClause },
       select: { amountDue: true },
     }),
     prisma.invoice.findMany({
-      where: overdueClause,
+      where: { ...scope, ...overdueClause },
       select: { id: true },
     }),
   ])

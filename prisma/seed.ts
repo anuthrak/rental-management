@@ -45,6 +45,10 @@ function monthsAgo(n: number, day = 1): Date {
 
 async function main() {
   console.log("Seeding 40 rooms...")
+  // userId is intentionally left unset (NULL) on every room/tenant/lease/
+  // invoice created below: this is the shared public demo dataset, visible
+  // to anyone browsing in Demo Mode. Real accounts get their own rows with
+  // userId set, scoped via getScopedData() in lib/db/queries.ts.
 
   for (let i = 1; i <= 40; i++) {
     const roomNumber = `Room ${100 + i}`

@@ -1,11 +1,13 @@
 "use client"
 
 import Link from "next/link"
-import { Building2, Receipt, Wallet } from "lucide-react"
+import { Building2, LogOut, Receipt, Wallet } from "lucide-react"
 
+import { logoutAction } from "@/app/login/actions"
 import { useI18n } from "@/components/i18n-provider"
 import { LanguageToggle } from "@/components/language-toggle"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { Button } from "@/components/ui/button"
 
 export function DashboardHeader() {
   const { t } = useI18n()
@@ -37,6 +39,11 @@ export function DashboardHeader() {
         </Link>
         <LanguageToggle />
         <ThemeToggle />
+        <form action={logoutAction}>
+          <Button type="submit" variant="ghost" size="icon" aria-label="Log out">
+            <LogOut />
+          </Button>
+        </form>
       </div>
     </header>
   )
