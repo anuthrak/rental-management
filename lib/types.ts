@@ -3,7 +3,7 @@ import { z } from "zod"
 export const UNITS = ["m³", "kW", "$", "unit", "month"] as const
 export type Unit = (typeof UNITS)[number]
 
-export const CURRENCIES = ["USD", "EUR", "GBP", "KES", "NGN", "ZAR", "INR"] as const
+export const CURRENCIES = ["USD", "KHR"] as const
 export type Currency = (typeof CURRENCIES)[number]
 
 export const LANGUAGES = ["en", "km"] as const
@@ -36,6 +36,8 @@ export const invoiceSchema = z
     notes: z.string(),
     waterUsageM3: z.number().min(0, "Must be 0 or more"),
     electricUsageKWh: z.number().min(0, "Must be 0 or more"),
+    waterRateUsd: z.number().min(0, "Must be 0 or more"),
+    electricRateUsd: z.number().min(0, "Must be 0 or more"),
     createdAt: z.string(),
   })
   .refine((v) => new Date(v.endDate) >= new Date(v.startDate), {

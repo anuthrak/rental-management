@@ -2,15 +2,7 @@
 
 import { useMemo } from "react"
 
-import {
-  computeTotals,
-  ELECTRIC_RATE_USD,
-  electricCost,
-  usdToKhr,
-  WATER_RATE_USD,
-  waterCost,
-  withAmounts,
-} from "@/lib/calc"
+import { computeTotals, electricCost, usdToKhr, waterCost, withAmounts } from "@/lib/calc"
 import { formatCurrency, formatKHR, formatNumber } from "@/lib/currency"
 import { useI18n } from "@/components/i18n-provider"
 import { useInvoiceStore } from "@/store/use-invoice-store"
@@ -34,6 +26,12 @@ export function InvoicePreview({
     () => computeTotals(draft.lineItems),
     [draft.lineItems],
   )
+
+  function displayUtilityAmount(amountUsd: number): string {
+    return draft.currency === "KHR"
+      ? formatCurrency(usdToKhr(amountUsd), "KHR", locale)
+      : formatCurrency(amountUsd, "USD", locale)
+  }
 
   return (
     <div
@@ -143,15 +141,15 @@ export function InvoicePreview({
             {draft.waterUsageM3 > 0 && (
               <p>
                 {t("waterCostNote")}: {formatNumber(draft.waterUsageM3, locale)} m³ ×{" "}
-                {formatCurrency(WATER_RATE_USD, "USD", locale)} ={" "}
-                {formatCurrency(waterCost(draft.waterUsageM3), "USD", locale)}
+                {displayUtilityAmount(draft.waterRateUsd)} ={" "}
+                {displayUtilityAmount(waterCost(draft.waterUsageM3, draft.waterRateUsd))}
               </p>
             )}
             {draft.electricUsageKWh > 0 && (
               <p>
                 {t("electricCostNote")}: {formatNumber(draft.electricUsageKWh, locale)} kWh ×{" "}
-                {formatCurrency(ELECTRIC_RATE_USD, "USD", locale)} ={" "}
-                {formatCurrency(electricCost(draft.electricUsageKWh), "USD", locale)}
+                {displayUtilityAmount(draft.electricRateUsd)} ={" "}
+                {displayUtilityAmount(electricCost(draft.electricUsageKWh, draft.electricRateUsd))}
               </p>
             )}
           </div>

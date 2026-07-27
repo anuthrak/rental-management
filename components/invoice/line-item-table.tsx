@@ -115,6 +115,7 @@ export function LineItemTable() {
 
         {lineItems.map((item, index) => {
           const amount = lineAmount(item)
+          const isUtilityItem = item.unit === "m³" || item.unit === "kW"
           return (
             <div
               key={item.id}
@@ -208,20 +209,30 @@ export function LineItemTable() {
                 >
                   {t("rate")}
                 </Label>
-                <Input
-                  id={`rate-${item.id}`}
-                  type="number"
-                  min={0}
-                  step="any"
-                  inputMode="decimal"
-                  className="text-right"
-                  value={item.rate}
-                  onChange={(e) =>
-                    updateLineItem(item.id, {
-                      rate: e.target.value === "" ? 0 : Number(e.target.value),
-                    })
-                  }
-                />
+                {isUtilityItem ? (
+                  <span
+                    id={`rate-${item.id}`}
+                    className="flex h-8 items-center justify-end px-2.5 text-sm text-muted-foreground tabular-nums"
+                    title="Set in the Utility usage section above"
+                  >
+                    {formatCurrency(item.rate, currency, locale)}
+                  </span>
+                ) : (
+                  <Input
+                    id={`rate-${item.id}`}
+                    type="number"
+                    min={0}
+                    step="any"
+                    inputMode="decimal"
+                    className="text-right"
+                    value={item.rate}
+                    onChange={(e) =>
+                      updateLineItem(item.id, {
+                        rate: e.target.value === "" ? 0 : Number(e.target.value),
+                      })
+                    }
+                  />
+                )}
               </div>
 
               <div className="flex flex-col md:items-end">

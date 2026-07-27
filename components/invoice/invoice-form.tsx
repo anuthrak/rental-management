@@ -3,8 +3,8 @@
 import { Building2, CalendarRange, Droplets, NotebookPen, ReceiptText, User } from "lucide-react"
 
 import { CURRENCIES, type Currency } from "@/lib/types"
-import { electricCost, waterCost } from "@/lib/calc"
-import { formatCurrency } from "@/lib/currency"
+import { electricCost, usdToKhr, waterCost } from "@/lib/calc"
+import { formatCurrency, formatKHR } from "@/lib/currency"
 import { useI18n } from "@/components/i18n-provider"
 import { useInvoiceStore } from "@/store/use-invoice-store"
 import { LineItemTable } from "@/components/invoice/line-item-table"
@@ -38,6 +38,11 @@ function SectionHeading({
       <h3 className="font-heading text-sm font-medium">{children}</h3>
     </div>
   )
+}
+
+const CURRENCY_LABELS: Record<Currency, string> = {
+  USD: "USD ($)",
+  KHR: "KHR (៛)",
 }
 
 function FieldError({ id }: { id: string }) {
@@ -91,7 +96,16 @@ export function InvoiceForm({
   const updateDraft = useInvoiceStore((s) => s.updateDraft)
   const waterUsageM3 = useInvoiceStore((s) => s.draft.waterUsageM3)
   const electricUsageKWh = useInvoiceStore((s) => s.draft.electricUsageKWh)
+  const waterRateUsd = useInvoiceStore((s) => s.draft.waterRateUsd)
+  const electricRateUsd = useInvoiceStore((s) => s.draft.electricRateUsd)
+  const setUtilityRate = useInvoiceStore((s) => s.setUtilityRate)
   const notes = useInvoiceStore((s) => s.draft.notes)
+
+  function displayUtilityAmount(amountUsd: number): string {
+    return currency === "KHR"
+      ? formatCurrency(usdToKhr(amountUsd), "KHR", locale)
+      : formatCurrency(amountUsd, "USD", locale)
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -155,7 +169,7 @@ export function InvoiceForm({
                 <SelectGroup>
                   {CURRENCIES.map((c) => (
                     <SelectItem key={c} value={c}>
-                      {c}
+                      {CURRENCY_LABELS[c]}
                     </SelectItem>
                   ))}
                 </SelectGroup>
@@ -182,9 +196,49 @@ export function InvoiceForm({
 
       <Separator />
 
-      {/* Utility usage (reference only — excluded from the grand total) */}
+      {/* Utility usage (excluded from the grand total) */}
       <section className="flex flex-col gap-4">
         <SectionHeading icon={Droplets}>{t("utilityUsage")}</SectionHeading>
+
+        {/* Base unit rates — editable, USD-anchored with a live KHR reference */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="waterRate">{t("waterRateField")}</Label>
+            <Input
+              id="waterRate"
+              type="number"
+              min={0}
+              step="any"
+              inputMode="decimal"
+              value={waterRateUsd}
+              onChange={(e) =>
+                setUtilityRate("water", e.target.value === "" ? 0 : Number(e.target.value))
+              }
+            />
+            <span className="text-xs text-muted-foreground">
+              ({formatKHR(usdToKhr(waterRateUsd))})
+            </span>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="electricRate">{t("electricRateField")}</Label>
+            <Input
+              id="electricRate"
+              type="number"
+              min={0}
+              step="any"
+              inputMode="decimal"
+              value={electricRateUsd}
+              onChange={(e) =>
+                setUtilityRate("electric", e.target.value === "" ? 0 : Number(e.target.value))
+              }
+            />
+            <span className="text-xs text-muted-foreground">
+              ({formatKHR(usdToKhr(electricRateUsd))})
+            </span>
+          </div>
+        </div>
+
+        {/* Aggregate usage for this invoice — informational only */}
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="waterUsage">{t("waterUsageLabel")}</Label>
@@ -223,13 +277,14 @@ export function InvoiceForm({
           <p className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
             {waterUsageM3 > 0 && (
               <>
-                {t("waterCostNote")}: {formatCurrency(waterCost(waterUsageM3), "USD", locale)}
+                {t("waterCostNote")}: {displayUtilityAmount(waterCost(waterUsageM3, waterRateUsd))}
                 {electricUsageKWh > 0 && " · "}
               </>
             )}
             {electricUsageKWh > 0 && (
               <>
-                {t("electricCostNote")}: {formatCurrency(electricCost(electricUsageKWh), "USD", locale)}
+                {t("electricCostNote")}:{" "}
+                {displayUtilityAmount(electricCost(electricUsageKWh, electricRateUsd))}
               </>
             )}
             {" — "}

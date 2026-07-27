@@ -13,12 +13,12 @@ export function usdToKhr(amountUsd: number): number {
   return Math.round((amountUsd || 0) * USD_TO_KHR_RATE)
 }
 
-export function waterCost(usageM3: number): number {
-  return Math.round((usageM3 || 0) * WATER_RATE_USD * 100) / 100
+export function waterCost(usageM3: number, rateUsd: number = WATER_RATE_USD): number {
+  return Math.round((usageM3 || 0) * rateUsd * 100) / 100
 }
 
-export function electricCost(usageKWh: number): number {
-  return Math.round((usageKWh || 0) * ELECTRIC_RATE_USD * 100) / 100
+export function electricCost(usageKWh: number, rateUsd: number = ELECTRIC_RATE_USD): number {
+  return Math.round((usageKWh || 0) * rateUsd * 100) / 100
 }
 
 // Reserved line-item id so the security fee toggle can find/remove its own

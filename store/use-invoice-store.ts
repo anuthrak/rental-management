@@ -3,10 +3,23 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
-import type { Invoice, LineItem, Unit } from "@/lib/types"
+import type { Currency, Invoice, LineItem, Unit } from "@/lib/types"
 import { invoiceSchema } from "@/lib/types"
 import { formatInvoiceNumber, nextInvoiceNumber } from "@/lib/invoice-number"
-import { SECURITY_FEE_AMOUNT, SECURITY_FEE_ID } from "@/lib/calc"
+import {
+  ELECTRIC_RATE_USD,
+  SECURITY_FEE_AMOUNT,
+  SECURITY_FEE_ID,
+  WATER_RATE_USD,
+  usdToKhr,
+} from "@/lib/calc"
+
+// Utility rates are authored in USD; when the invoice currency is KHR,
+// water/electric line items must carry their rate in KHR too so they sum
+// correctly alongside manually-entered (already-in-currency) line items.
+function scaledRate(rateUsd: number, currency: Currency): number {
+  return currency === "KHR" ? usdToKhr(rateUsd) : rateUsd
+}
 
 const NOTES_PLACEHOLDER = [
   "Payment is due within 7 days of the invoice date.",
@@ -53,6 +66,8 @@ function makeDraft(invoiceNumber = formatInvoiceNumber(1)): Draft {
     notes: NOTES_PLACEHOLDER,
     waterUsageM3: 0,
     electricUsageKWh: 0,
+    waterRateUsd: WATER_RATE_USD,
+    electricRateUsd: ELECTRIC_RATE_USD,
   }
 }
 
@@ -81,6 +96,7 @@ interface InvoiceState {
   removeLineItem: (id: string) => void
   moveLineItem: (fromIndex: number, toIndex: number) => void
   toggleSecurityFee: (label: string) => void
+  setUtilityRate: (kind: "water" | "electric", rateUsd: number) => void
   resetDraft: () => void
   saveInvoice: () => Invoice
   loadInvoice: (id: string) => void
@@ -115,25 +131,55 @@ export const useInvoiceStore = create<InvoiceState>()(
       },
       clearErrors: () => set({ errors: {} }),
       updateDraft: (patch) =>
-        set((s) => ({ draft: { ...s.draft, ...patch }, errors: {} })),
+        set((s) => {
+          const nextDraft = { ...s.draft, ...patch }
+          if (patch.currency && patch.currency !== s.draft.currency) {
+            nextDraft.lineItems = nextDraft.lineItems.map((item) => {
+              if (item.unit === "m³") {
+                return { ...item, rate: scaledRate(nextDraft.waterRateUsd, nextDraft.currency) }
+              }
+              if (item.unit === "kW") {
+                return { ...item, rate: scaledRate(nextDraft.electricRateUsd, nextDraft.currency) }
+              }
+              return item
+            })
+          }
+          return { draft: nextDraft, errors: {} }
+        }),
       addLineItem: (partial) =>
-        set((s) => ({
-          errors: {},
-          draft: {
-            ...s.draft,
-            lineItems: [...s.draft.lineItems, newLineItem(partial)],
-          },
-        })),
+        set((s) => {
+          let init = partial
+          if (partial?.unit === "m³" && partial.rate === undefined) {
+            init = { ...partial, rate: scaledRate(s.draft.waterRateUsd, s.draft.currency) }
+          } else if (partial?.unit === "kW" && partial.rate === undefined) {
+            init = { ...partial, rate: scaledRate(s.draft.electricRateUsd, s.draft.currency) }
+          }
+          return {
+            errors: {},
+            draft: {
+              ...s.draft,
+              lineItems: [...s.draft.lineItems, newLineItem(init)],
+            },
+          }
+        }),
       updateLineItem: (id, patch) =>
-        set((s) => ({
-          errors: {},
-          draft: {
-            ...s.draft,
-            lineItems: s.draft.lineItems.map((item) =>
-              item.id === id ? { ...item, ...patch } : item,
-            ),
-          },
-        })),
+        set((s) => {
+          let nextPatch = patch
+          if (patch.unit === "m³" && patch.rate === undefined) {
+            nextPatch = { ...patch, rate: scaledRate(s.draft.waterRateUsd, s.draft.currency) }
+          } else if (patch.unit === "kW" && patch.rate === undefined) {
+            nextPatch = { ...patch, rate: scaledRate(s.draft.electricRateUsd, s.draft.currency) }
+          }
+          return {
+            errors: {},
+            draft: {
+              ...s.draft,
+              lineItems: s.draft.lineItems.map((item) =>
+                item.id === id ? { ...item, ...nextPatch } : item,
+              ),
+            },
+          }
+        }),
       removeLineItem: (id) =>
         set((s) => ({
           errors: {},
@@ -179,6 +225,21 @@ export const useInvoiceStore = create<InvoiceState>()(
             },
           }
         }),
+      setUtilityRate: (kind, rateUsd) =>
+        set((s) => {
+          const field = kind === "water" ? "waterRateUsd" : "electricRateUsd"
+          const unit: Unit = kind === "water" ? "m³" : "kW"
+          return {
+            errors: {},
+            draft: {
+              ...s.draft,
+              [field]: rateUsd,
+              lineItems: s.draft.lineItems.map((item) =>
+                item.unit === unit ? { ...item, rate: scaledRate(rateUsd, s.draft.currency) } : item,
+              ),
+            },
+          }
+        }),
       resetDraft: () =>
         set((s) => ({
           draft: {
@@ -214,7 +275,10 @@ export const useInvoiceStore = create<InvoiceState>()(
           const found = s.savedInvoices.find((i) => i.id === id)
           if (!found) return s
           const { createdAt: _createdAt, ...rest } = found
-          return { draft: { ...rest } }
+          // Backfill fields added after this invoice was saved (e.g. an
+          // older record predating utility rates) so inputs never mount
+          // with an undefined value.
+          return { draft: { ...makeDraft(), ...rest } }
         }),
       deleteInvoice: (id) =>
         set((s) => ({
@@ -224,6 +288,18 @@ export const useInvoiceStore = create<InvoiceState>()(
     {
       name: "rentledger-store",
       partialize: (s) => ({ draft: s.draft, savedInvoices: s.savedInvoices }),
+      // Backfill any fields added after a user's localStorage snapshot was
+      // written (e.g. utility rates) so number inputs never mount with an
+      // undefined value — Base UI locks an input's controlled/uncontrolled
+      // mode on first render, so an undefined value here can't self-heal.
+      merge: (persisted, current) => {
+        const persistedState = persisted as Partial<InvoiceState> | undefined
+        return {
+          ...current,
+          ...persistedState,
+          draft: { ...makeDraft(), ...persistedState?.draft },
+        }
+      },
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true)
       },
