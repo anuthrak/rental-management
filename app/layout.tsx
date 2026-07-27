@@ -5,6 +5,7 @@ import { Inter, Space_Grotesk } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
 import { I18nProvider } from '@/components/i18n-provider'
 import { GlobalStatusBar } from '@/components/global-status-bar'
+import { SimpleModeEffect } from '@/components/simple-mode-effect'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
@@ -46,7 +47,7 @@ export default async function RootLayout({
       suppressHydrationWarning
       className={`${inter.variable} ${spaceGrotesk.variable} bg-background`}
     >
-      <body className="font-sans antialiased">
+      <body className="flex min-h-dvh flex-col font-sans antialiased">
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
@@ -54,8 +55,9 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <I18nProvider>
+            <SimpleModeEffect />
             <GlobalStatusBar />
-            {children}
+            <div className="flex flex-1 flex-col">{children}</div>
             <Toaster richColors position="top-center" />
           </I18nProvider>
         </ThemeProvider>

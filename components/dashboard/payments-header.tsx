@@ -5,7 +5,9 @@ import { ArrowLeft, Wallet } from "lucide-react"
 
 import { useI18n } from "@/components/i18n-provider"
 import { LanguageToggle } from "@/components/language-toggle"
+import { SimpleModeToggle } from "@/components/simple-mode-toggle"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { TutorialButton } from "@/components/dashboard/tutorial-button"
 
 export function PaymentsHeader() {
   const { t } = useI18n()
@@ -22,14 +24,16 @@ export function PaymentsHeader() {
       </div>
       <div className="flex items-center gap-2">
         <Link
-          href="/dashboard"
-          className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-foreground/70 hover:bg-muted hover:text-foreground"
+          href="/"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-foreground/70 hover:bg-muted hover:text-foreground"
         >
           <ArrowLeft className="size-4" />
           {t("navDashboard")}
         </Link>
+        <SimpleModeToggle />
         <LanguageToggle />
         <ThemeToggle />
+        <TutorialButton />
       </div>
     </header>
   )

@@ -3,13 +3,16 @@
 import { Plus, Trash2 } from "lucide-react"
 
 import { useOnboardingStore } from "@/store/use-onboarding-store"
+import { useSimpleModeStore } from "@/store/use-simple-mode-store"
 import { formatCurrency } from "@/lib/currency"
+import { AdvancedSection } from "@/components/simple-mode/advanced-section"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 
 export function StepProperty() {
+  const simpleMode = useSimpleModeStore((s) => s.simpleMode)
   const propertyName = useOnboardingStore((s) => s.propertyName)
   const setPropertyName = useOnboardingStore((s) => s.setPropertyName)
   const pricingModel = useOnboardingStore((s) => s.pricingModel)
@@ -37,7 +40,7 @@ export function StepProperty() {
 
       <div className="flex flex-col gap-2">
         <Label>Pricing model</Label>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className={cn("grid gap-3", !simpleMode && "sm:grid-cols-2")}>
           <button
             type="button"
             onClick={() => setPricingModel("standard")}
@@ -53,22 +56,43 @@ export function StepProperty() {
               Auto-generate rooms with one base rate — quick setup for uniform pricing.
             </span>
           </button>
-          <button
-            type="button"
-            onClick={() => setPricingModel("custom")}
-            className={cn(
-              "flex flex-col gap-1 rounded-lg border p-4 text-left transition-colors",
-              pricingModel === "custom"
-                ? "border-primary bg-accent"
-                : "border-border hover:bg-muted",
-            )}
-          >
-            <span className="font-medium">Custom</span>
-            <span className="text-sm text-muted-foreground">
-              Add each room by hand with its own name and rate.
-            </span>
-          </button>
+          {!simpleMode && (
+            <button
+              type="button"
+              onClick={() => setPricingModel("custom")}
+              className={cn(
+                "flex flex-col gap-1 rounded-lg border p-4 text-left transition-colors",
+                pricingModel === "custom"
+                  ? "border-primary bg-accent"
+                  : "border-border hover:bg-muted",
+              )}
+            >
+              <span className="font-medium">Custom</span>
+              <span className="text-sm text-muted-foreground">
+                Add each room by hand with its own name and rate.
+              </span>
+            </button>
+          )}
         </div>
+        {simpleMode && (
+          <AdvancedSection>
+            <button
+              type="button"
+              onClick={() => setPricingModel("custom")}
+              className={cn(
+                "flex w-full flex-col gap-1 rounded-lg border p-4 text-left transition-colors",
+                pricingModel === "custom"
+                  ? "border-primary bg-accent"
+                  : "border-border hover:bg-muted",
+              )}
+            >
+              <span className="font-medium">Custom</span>
+              <span className="text-sm text-muted-foreground">
+                Add each room by hand with its own name and rate.
+              </span>
+            </button>
+          </AdvancedSection>
+        )}
       </div>
 
       {pricingModel === "standard" ? (

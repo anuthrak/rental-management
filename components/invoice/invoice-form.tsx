@@ -5,8 +5,11 @@ import { Building2, CalendarRange, Droplets, NotebookPen, ReceiptText, User } fr
 import { CURRENCIES, type Currency } from "@/lib/types"
 import { electricCost, usdToKhr, waterCost } from "@/lib/calc"
 import { formatCurrency, formatKHR } from "@/lib/currency"
+import { addDaysDateOnly, monthBounds, todayDateOnly } from "@/lib/date"
 import { useI18n } from "@/components/i18n-provider"
 import { useInvoiceStore } from "@/store/use-invoice-store"
+import { useSimpleModeStore } from "@/store/use-simple-mode-store"
+import { AdvancedSection } from "@/components/simple-mode/advanced-section"
 import { LineItemTable } from "@/components/invoice/line-item-table"
 import { InvoiceTotals } from "@/components/invoice/invoice-totals"
 import { FormActions } from "@/components/invoice/form-actions"
@@ -92,7 +95,9 @@ export function InvoiceForm({
   previewRef: React.RefObject<HTMLDivElement | null>
 }) {
   const { t, locale } = useI18n()
+  const simpleMode = useSimpleModeStore((s) => s.simpleMode)
   const currency = useInvoiceStore((s) => s.draft.currency)
+  const startDate = useInvoiceStore((s) => s.draft.startDate)
   const updateDraft = useInvoiceStore((s) => s.updateDraft)
   const waterUsageM3 = useInvoiceStore((s) => s.draft.waterUsageM3)
   const electricUsageKWh = useInvoiceStore((s) => s.draft.electricUsageKWh)
@@ -112,25 +117,27 @@ export function InvoiceForm({
       {/* Business */}
       <section className="flex flex-col gap-4">
         <SectionHeading icon={Building2}>{t("companyInfo")}</SectionHeading>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FormField
-            id="companyName"
-            label={t("companyName")}
-            placeholder={t("companyNamePlaceholder")}
-          />
-          <FormField
-            id="invoiceNumber"
-            label={t("invoiceNumber")}
-            placeholder="#0001"
-          />
-          <div className="sm:col-span-2">
+        <AdvancedSection>
+          <div className="grid gap-4 sm:grid-cols-2">
             <FormField
-              id="companyAddress"
-              label={t("companyAddress")}
-              placeholder={t("companyAddressPlaceholder")}
+              id="companyName"
+              label={t("companyName")}
+              placeholder={t("companyNamePlaceholder")}
             />
+            <FormField
+              id="invoiceNumber"
+              label={t("invoiceNumber")}
+              placeholder="#0001"
+            />
+            <div className="sm:col-span-2">
+              <FormField
+                id="companyAddress"
+                label={t("companyAddress")}
+                placeholder={t("companyAddressPlaceholder")}
+              />
+            </div>
           </div>
-        </div>
+        </AdvancedSection>
       </section>
 
       <Separator />
@@ -186,12 +193,45 @@ export function InvoiceForm({
         <SectionHeading icon={CalendarRange}>
           {t("billingPeriod")}
         </SectionHeading>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FormField id="startDate" label={t("startDate")} type="date" />
-          <FormField id="endDate" label={t("endDate")} type="date" />
-          <FormField id="issueDate" label={t("issueDate")} type="date" />
-          <FormField id="dueDate" label={t("dueDateField")} type="date" />
-        </div>
+        {simpleMode ? (
+          <>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="billingMonth">{t("billingMonthLabel")}</Label>
+              <Input
+                id="billingMonth"
+                type="month"
+                className="min-h-11"
+                value={startDate.slice(0, 7)}
+                onChange={(e) => {
+                  if (!e.target.value) return
+                  const { start, end } = monthBounds(e.target.value)
+                  const issueDate = todayDateOnly()
+                  updateDraft({
+                    startDate: start,
+                    endDate: end,
+                    issueDate,
+                    dueDate: addDaysDateOnly(issueDate, 7),
+                  })
+                }}
+              />
+            </div>
+            <AdvancedSection>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField id="startDate" label={t("startDate")} type="date" />
+                <FormField id="endDate" label={t("endDate")} type="date" />
+                <FormField id="issueDate" label={t("issueDate")} type="date" />
+                <FormField id="dueDate" label={t("dueDateField")} type="date" />
+              </div>
+            </AdvancedSection>
+          </>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FormField id="startDate" label={t("startDate")} type="date" />
+            <FormField id="endDate" label={t("endDate")} type="date" />
+            <FormField id="issueDate" label={t("issueDate")} type="date" />
+            <FormField id="dueDate" label={t("dueDateField")} type="date" />
+          </div>
+        )}
       </section>
 
       <Separator />
@@ -200,6 +240,7 @@ export function InvoiceForm({
       <section className="flex flex-col gap-4">
         <SectionHeading icon={Droplets}>{t("utilityUsage")}</SectionHeading>
 
+        <AdvancedSection className="flex flex-col gap-4">
         {/* Base unit rates — editable, USD-anchored with a live KHR reference */}
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
@@ -291,6 +332,7 @@ export function InvoiceForm({
             {t("utilityNoteTitle")}
           </p>
         )}
+        </AdvancedSection>
       </section>
 
       <Separator />
@@ -309,12 +351,14 @@ export function InvoiceForm({
       {/* Notes */}
       <section className="flex flex-col gap-4">
         <SectionHeading icon={NotebookPen}>{t("notesLabel")}</SectionHeading>
-        <Textarea
-          id="notes"
-          rows={5}
-          value={notes}
-          onChange={(e) => updateDraft({ notes: e.target.value })}
-        />
+        <AdvancedSection>
+          <Textarea
+            id="notes"
+            rows={5}
+            value={notes}
+            onChange={(e) => updateDraft({ notes: e.target.value })}
+          />
+        </AdvancedSection>
       </section>
 
       <FormActions previewRef={previewRef} />

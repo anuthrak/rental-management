@@ -1,10 +1,22 @@
 import { prisma } from "@/lib/prisma"
 import type { InvoiceStatus, RoomStatus } from "@prisma/client"
+import type { Currency } from "@/lib/types"
 
 // A NULL userId is the shared public demo dataset; a specific userId scopes
 // to that registered account's own rows. Pass this into a query's `where`.
 export function getScopedData(userId: string | null): { userId: string | null } {
   return { userId }
+}
+
+// Demo/guest mode (userId null) has no User row to read a preference from,
+// so it falls back to USD — the same default a brand-new account starts with.
+export async function getUserCurrencyPreference(userId: string | null): Promise<Currency> {
+  if (!userId) return "USD"
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { currencyPreference: true },
+  })
+  return (user?.currencyPreference as Currency) ?? "USD"
 }
 
 export type RoomInvoice = {
@@ -94,6 +106,7 @@ export type DashboardInvoice = {
   roomId: string
   roomNumber: string
   tenantName: string
+  tenantPhone: string | null
 }
 
 export async function getInvoices(userId?: string | null): Promise<DashboardInvoice[]> {
@@ -113,6 +126,7 @@ export async function getInvoices(userId?: string | null): Promise<DashboardInvo
     roomId: invoice.roomId,
     roomNumber: invoice.room.roomNumber,
     tenantName: invoice.tenant.fullName,
+    tenantPhone: invoice.tenant.phone,
   }))
 }
 

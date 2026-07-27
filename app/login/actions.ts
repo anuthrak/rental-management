@@ -28,13 +28,13 @@ export async function loginAction(
 
   await clearDemoMode()
   await createSession(user)
-  redirect("/dashboard")
+  redirect("/")
 }
 
 export async function startDemoAction(): Promise<void> {
   await clearSession()
   await setDemoMode()
-  redirect("/dashboard")
+  redirect("/")
 }
 
 export async function logoutAction(): Promise<void> {

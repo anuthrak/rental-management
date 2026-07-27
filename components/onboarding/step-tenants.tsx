@@ -10,6 +10,7 @@ import {
   type SecurityDepositStatus,
 } from "@/store/use-onboarding-store"
 import { formatCurrency } from "@/lib/currency"
+import { AdvancedSection } from "@/components/simple-mode/advanced-section"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -206,69 +207,71 @@ export function StepTenants() {
                 onChange={(e) => patchDraft({ agreedRent: Number(e.target.value) })}
               />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="deposit">Security deposit</Label>
-              <Input
-                id="deposit"
-                type="number"
-                min={0}
-                step="any"
-                value={draft.securityDeposit}
-                onChange={(e) => patchDraft({ securityDeposit: Number(e.target.value) })}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="deposit-status">Deposit status</Label>
-              <Select
-                value={draft.securityDepositStatus}
-                onValueChange={(v) => patchDraft({ securityDepositStatus: v as SecurityDepositStatus })}
-              >
-                <SelectTrigger id="deposit-status" className="w-full">
-                  <SelectValue>
-                    {(value: SecurityDepositStatus | null) =>
-                      value ? DEPOSIT_STATUS_LABELS[value] : "Select a status"
-                    }
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {(Object.keys(DEPOSIT_STATUS_LABELS) as SecurityDepositStatus[]).map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {DEPOSIT_STATUS_LABELS[status]}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
+
+          <AdvancedSection>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="deposit">Security deposit</Label>
+                <Input
+                  id="deposit"
+                  type="number"
+                  min={0}
+                  step="any"
+                  value={draft.securityDeposit}
+                  onChange={(e) => patchDraft({ securityDeposit: Number(e.target.value) })}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="deposit-status">Deposit status</Label>
+                <Select
+                  value={draft.securityDepositStatus}
+                  onValueChange={(v) => patchDraft({ securityDepositStatus: v as SecurityDepositStatus })}
+                >
+                  <SelectTrigger id="deposit-status" className="w-full">
+                    <SelectValue>
+                      {(value: SecurityDepositStatus | null) =>
+                        value ? DEPOSIT_STATUS_LABELS[value] : "Select a status"
+                      }
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {(Object.keys(DEPOSIT_STATUS_LABELS) as SecurityDepositStatus[]).map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {DEPOSIT_STATUS_LABELS[status]}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="water-start">Initial water meter (m³)</Label>
+                <Input
+                  id="water-start"
+                  type="number"
+                  min={0}
+                  step="any"
+                  value={draft.waterMeterStart}
+                  onChange={(e) => patchDraft({ waterMeterStart: Number(e.target.value) })}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="electric-start">Initial electric meter (kW)</Label>
+                <Input
+                  id="electric-start"
+                  type="number"
+                  min={0}
+                  step="any"
+                  value={draft.electricMeterStart}
+                  onChange={(e) => patchDraft({ electricMeterStart: Number(e.target.value) })}
+                />
+              </div>
+            </div>
+          </AdvancedSection>
 
           <Separator />
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="water-start">Initial water meter (m³)</Label>
-              <Input
-                id="water-start"
-                type="number"
-                min={0}
-                step="any"
-                value={draft.waterMeterStart}
-                onChange={(e) => patchDraft({ waterMeterStart: Number(e.target.value) })}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="electric-start">Initial electric meter (kW)</Label>
-              <Input
-                id="electric-start"
-                type="number"
-                min={0}
-                step="any"
-                value={draft.electricMeterStart}
-                onChange={(e) => patchDraft({ electricMeterStart: Number(e.target.value) })}
-              />
-            </div>
-          </div>
 
           <div>
             <Button type="submit" disabled={!draft.roomId || !draft.fullName.trim()}>

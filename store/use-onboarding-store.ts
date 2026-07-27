@@ -119,7 +119,7 @@ interface OnboardingState {
 }
 
 const initialState = {
-  step: 1,
+  step: 0,
   propertyName: "",
   pricingModel: "standard" as PricingModel,
   standardRoomCount: DEFAULT_STANDARD_ROOM_COUNT,

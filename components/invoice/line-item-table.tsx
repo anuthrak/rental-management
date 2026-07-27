@@ -9,6 +9,7 @@ import { lineAmount, SECURITY_FEE_ID } from "@/lib/calc"
 import { formatCurrency } from "@/lib/currency"
 import { useI18n } from "@/components/i18n-provider"
 import { useInvoiceStore } from "@/store/use-invoice-store"
+import { AdvancedSection } from "@/components/simple-mode/advanced-section"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -91,6 +92,7 @@ export function LineItemTable() {
         </div>
       </div>
 
+      <AdvancedSection className="flex flex-col gap-3">
       {/* Column headers (desktop) */}
       {lineItems.length > 0 && (
         <div className="hidden items-center gap-1.5 px-1 text-xs font-medium text-muted-foreground md:flex">
@@ -272,6 +274,7 @@ export function LineItemTable() {
           {t("addLineItem")}
         </Button>
       </div>
+      </AdvancedSection>
     </div>
   )
 }

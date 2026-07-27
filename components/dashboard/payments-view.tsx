@@ -1,13 +1,16 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
-import { Search } from "lucide-react"
+import { useEffect, useMemo, useState, useTransition } from "react"
+import { Search, Share2 } from "lucide-react"
 import { toast } from "sonner"
 
 import type { DashboardInvoice } from "@/lib/db/queries"
 import { formatCurrency } from "@/lib/currency"
+import { formatDateDMY } from "@/lib/date"
+import { shareInvoiceSummary } from "@/lib/share"
 import { useI18n } from "@/components/i18n-provider"
-import { setInvoiceStatus } from "@/app/dashboard/actions"
+import { useSimpleModeStore } from "@/store/use-simple-mode-store"
+import { setInvoiceStatus } from "@/app/actions/dashboard"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -23,24 +26,35 @@ function statusVariant(invoice: DashboardInvoice) {
 
 export function PaymentsView({ invoices }: { invoices: DashboardInvoice[] }) {
   const { t } = useI18n()
+  const simpleMode = useSimpleModeStore((s) => s.simpleMode)
   const [query, setQuery] = useState("")
-  const [tab, setTab] = useState<FilterTab>("all")
+  const [tab, setTab] = useState<FilterTab>(simpleMode ? "unpaid" : "all")
+  const [showOnlyUnpaid, setShowOnlyUnpaid] = useState(true)
   const [isPending, startTransition] = useTransition()
   const [pendingId, setPendingId] = useState<string | null>(null)
+
+  // Jump to the actionable filter when Simple Mode is (de)activated.
+  useEffect(() => {
+    setTab(simpleMode ? "unpaid" : "all")
+  }, [simpleMode])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     return invoices.filter((invoice) => {
-      if (tab === "unpaid" && (invoice.status !== "UNPAID" || invoice.isOverdue)) return false
-      if (tab === "overdue" && !invoice.isOverdue) return false
-      if (tab === "paid" && invoice.status !== "PAID") return false
+      if (simpleMode) {
+        if (showOnlyUnpaid && invoice.status === "PAID") return false
+      } else {
+        if (tab === "unpaid" && (invoice.status !== "UNPAID" || invoice.isOverdue)) return false
+        if (tab === "overdue" && !invoice.isOverdue) return false
+        if (tab === "paid" && invoice.status !== "PAID") return false
+      }
       if (!q) return true
       return (
         invoice.roomNumber.toLowerCase().includes(q) ||
         invoice.tenantName.toLowerCase().includes(q)
       )
     })
-  }, [invoices, query, tab])
+  }, [invoices, query, tab, simpleMode, showOnlyUnpaid])
 
   function handleToggleStatus(invoiceId: string, isPaid: boolean) {
     setPendingId(invoiceId)
@@ -51,6 +65,18 @@ export function PaymentsView({ invoices }: { invoices: DashboardInvoice[] }) {
     })
   }
 
+  async function handleShare(invoice: DashboardInvoice) {
+    const dueLabel = `${t("dueLabel")} ${formatDateDMY(invoice.dueDate)}`
+    const result = await shareInvoiceSummary({
+      roomNumber: invoice.roomNumber,
+      tenantName: invoice.tenantName,
+      phone: invoice.tenantPhone,
+      amountLabel: formatCurrency(invoice.amountDue, "USD"),
+      dueLabel,
+    })
+    if (result === "copied") toast.success(t("shareCopiedToast"))
+  }
+
   function statusLabel(invoice: DashboardInvoice) {
     if (invoice.status === "PAID") return t("paidStatus")
     return invoice.isOverdue ? t("overdueStatus") : t("unpaidStatus")
@@ -59,23 +85,42 @@ export function PaymentsView({ invoices }: { invoices: DashboardInvoice[] }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative w-full sm:max-w-xs">
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t("searchRoomTenant")}
-            className="pl-8"
-          />
-        </div>
-        <Tabs value={tab} onValueChange={(v) => setTab(v as FilterTab)}>
-          <TabsList>
-            <TabsTrigger value="all">{t("tabAll")}</TabsTrigger>
-            <TabsTrigger value="unpaid">{t("tabUnpaid")}</TabsTrigger>
-            <TabsTrigger value="overdue">{t("tabOverdue")}</TabsTrigger>
-            <TabsTrigger value="paid">{t("tabPaid")}</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        {!simpleMode && (
+          <div className="relative w-full sm:max-w-xs">
+            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t("searchRoomTenant")}
+              className="pl-8"
+            />
+          </div>
+        )}
+        {simpleMode ? (
+          <button
+            type="button"
+            role="switch"
+            aria-checked={showOnlyUnpaid}
+            onClick={() => setShowOnlyUnpaid((v) => !v)}
+            className="flex min-h-11 items-center gap-2 rounded-lg border border-border bg-card px-3 text-sm font-medium"
+          >
+            <span
+              className={`flex h-5 w-9 items-center rounded-full transition-colors ${showOnlyUnpaid ? "bg-primary justify-end" : "bg-muted justify-start"}`}
+            >
+              <span className="mx-0.5 size-4 rounded-full bg-background shadow" />
+            </span>
+            {t("showOnlyUnpaidLabel")}
+          </button>
+        ) : (
+          <Tabs value={tab} onValueChange={(v) => setTab(v as FilterTab)}>
+            <TabsList>
+              <TabsTrigger value="all">{t("tabAll")}</TabsTrigger>
+              <TabsTrigger value="unpaid">{t("tabUnpaid")}</TabsTrigger>
+              <TabsTrigger value="overdue">{t("tabOverdue")}</TabsTrigger>
+              <TabsTrigger value="paid">{t("tabPaid")}</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
       </div>
 
       <Card>
@@ -92,17 +137,29 @@ export function PaymentsView({ invoices }: { invoices: DashboardInvoice[] }) {
                     {invoice.roomNumber} &middot; {invoice.tenantName}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    Due {new Date(invoice.dueDate).toLocaleDateString()}
+                    Due {formatDateDMY(invoice.dueDate)}
                   </span>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <span className="font-medium tabular-nums">
                     {formatCurrency(invoice.amountDue, "USD")}
                   </span>
                   <Badge variant={statusVariant(invoice)}>{statusLabel(invoice)}</Badge>
+                  {!isPaid && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="min-h-11"
+                      onClick={() => handleShare(invoice)}
+                    >
+                      <Share2 data-icon="inline-start" />
+                      {t("shareInvoiceAction")}
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant={isPaid ? "outline" : "default"}
+                    className="min-h-11"
                     disabled={isPending && pendingId === invoice.id}
                     onClick={() => handleToggleStatus(invoice.id, isPaid)}
                   >

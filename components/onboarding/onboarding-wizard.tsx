@@ -5,14 +5,18 @@ import { toast } from "sonner"
 
 import { resolveRooms, useOnboardingStore } from "@/store/use-onboarding-store"
 import { completeOnboarding, skipOnboarding } from "@/app/actions/onboarding"
+import { useI18n } from "@/components/i18n-provider"
+import { LanguageToggle } from "@/components/language-toggle"
 import { Button } from "@/components/ui/button"
 import { StepIndicator } from "@/components/onboarding/step-indicator"
+import { StepLanguage } from "@/components/onboarding/step-language"
 import { StepProperty } from "@/components/onboarding/step-property"
 import { StepTenants } from "@/components/onboarding/step-tenants"
 import { StepPreferences } from "@/components/onboarding/step-preferences"
 import { StepSummary } from "@/components/onboarding/step-summary"
 
 export function OnboardingWizard() {
+  const { t } = useI18n()
   const step = useOnboardingStore((s) => s.step)
   const setStep = useOnboardingStore((s) => s.setStep)
   const propertyName = useOnboardingStore((s) => s.propertyName)
@@ -52,7 +56,7 @@ export function OnboardingWizard() {
   }
 
   function handleBack() {
-    setStep(Math.max(1, step - 1))
+    setStep(Math.max(0, step - 1))
   }
 
   function handleComplete() {
@@ -87,40 +91,55 @@ export function OnboardingWizard() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-10">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-xl font-semibold">Set up your property</h1>
-          <p className="text-sm text-muted-foreground">
-            A few quick steps to get your dashboard ready. You can change any of this later.
-          </p>
+    <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-6 sm:gap-8 sm:py-10">
+      <div className="flex items-center justify-between gap-4">
+        {step === 0 ? (
+          <div />
+        ) : (
+          <div>
+            <h1 className="font-heading text-xl font-semibold">Set up your property</h1>
+            <p className="text-sm text-muted-foreground">
+              A few quick steps to get your dashboard ready. You can change any of this later.
+            </p>
+          </div>
+        )}
+        <div className="flex items-center gap-2">
+          <LanguageToggle />
+          <form action={skipOnboarding}>
+            <Button type="submit" variant="ghost" size="sm" className="min-h-11">
+              {t("skipOnboarding")}
+            </Button>
+          </form>
         </div>
-        <form action={skipOnboarding}>
-          <Button type="submit" variant="ghost" size="sm">
-            Skip Onboarding
-          </Button>
-        </form>
       </div>
 
-      <StepIndicator current={step} />
+      {step > 0 && <StepIndicator current={step} />}
 
-      <div>
+      <div className="flex-1">
+        {step === 0 && <StepLanguage onContinue={() => setStep(1)} />}
         {step === 1 && <StepProperty />}
         {step === 2 && <StepTenants />}
         {step === 3 && <StepPreferences />}
         {step === 4 && <StepSummary onComplete={handleComplete} isPending={isPending} />}
       </div>
 
-      <div className="flex items-center justify-between">
-        <Button type="button" variant="outline" onClick={handleBack} disabled={step === 1}>
-          Back
-        </Button>
-        {step < 4 && (
-          <Button type="button" onClick={handleNext}>
-            Next
+      {step > 0 && (
+        <div className="sticky bottom-0 -mx-4 flex items-center justify-between gap-3 border-t border-border bg-background/95 px-4 py-3 backdrop-blur supports-backdrop-filter:bg-background/80 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleBack}
+            className="min-h-11 flex-1 sm:flex-none"
+          >
+            {t("onboardingBack")}
           </Button>
-        )}
-      </div>
+          {step < 4 && (
+            <Button type="button" onClick={handleNext} className="min-h-11 flex-1 sm:flex-none">
+              {t("onboardingNext")}
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

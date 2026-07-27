@@ -7,6 +7,7 @@ import { toast } from "sonner"
 
 import type { DashboardRoom } from "@/lib/db/queries"
 import { formatCurrency } from "@/lib/currency"
+import { formatDateDMY } from "@/lib/date"
 import { useI18n } from "@/components/i18n-provider"
 import { useInvoiceStore, newLineItem } from "@/store/use-invoice-store"
 import {
@@ -15,7 +16,7 @@ import {
   endLease,
   setInvoiceStatus,
   updateRoomTargetPrice,
-} from "@/app/dashboard/actions"
+} from "@/app/actions/dashboard"
 import { MeterReadingSection } from "@/components/dashboard/meter-reading-section"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -156,13 +157,13 @@ export function RoomDrawer({
           newLineItem({ label: "Monthly Rent", quantity: 1, unit: "month", rate: amount }),
         ],
       })
-      router.push("/")
+      router.push("/invoice")
     })
   }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent>
+      <SheetContent className="data-[side=right]:w-full sm:data-[side=right]:w-3/4">
         <SheetHeader className="border-b">
           <div className="flex items-center justify-between gap-2 pr-8">
             <SheetTitle>{activeRoom.roomNumber}</SheetTitle>
@@ -243,7 +244,7 @@ export function RoomDrawer({
                   onChange={(e) => setAgreedRent(e.target.value)}
                 />
               </div>
-              <Button type="submit" disabled={isPending}>
+              <Button type="submit" disabled={isPending} className="min-h-11">
                 {t("assignTenantAction")}
               </Button>
             </form>
@@ -285,7 +286,7 @@ export function RoomDrawer({
                                 {formatCurrency(invoice.amountDue, "USD")}
                               </span>
                               <span className="text-xs text-muted-foreground">
-                                Due {new Date(invoice.dueDate).toLocaleDateString()}
+                                Due {formatDateDMY(invoice.dueDate)}
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
@@ -339,23 +340,32 @@ export function RoomDrawer({
                     />
                   </div>
                   <div className="flex gap-2">
-                    <Button type="submit" disabled={isPending} className="flex-1">
+                    <Button type="submit" disabled={isPending} className="min-h-11 flex-1">
                       <Receipt data-icon="inline-start" />
                       {t("continueToInvoice")}
                     </Button>
-                    <Button type="button" variant="outline" onClick={() => setShowInvoiceForm(false)}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="min-h-11"
+                      onClick={() => setShowInvoiceForm(false)}
+                    >
                       {t("cancel")}
                     </Button>
                   </div>
                 </form>
               ) : (
                 <div className="flex flex-col gap-2">
-                  <Button onClick={() => setShowInvoiceForm(true)}>
+                  <Button className="min-h-11" onClick={() => setShowInvoiceForm(true)}>
                     <Receipt data-icon="inline-start" />
                     {t("generateInvoiceAction")}
                   </Button>
                   <AlertDialog open={endLeaseConfirmOpen} onOpenChange={setEndLeaseConfirmOpen}>
-                    <Button variant="outline" onClick={() => setEndLeaseConfirmOpen(true)}>
+                    <Button
+                      variant="outline"
+                      className="min-h-11"
+                      onClick={() => setEndLeaseConfirmOpen(true)}
+                    >
                       {t("endLeaseAction")}
                     </Button>
                     <AlertDialogContent>

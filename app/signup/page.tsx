@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function SignupPage() {
   return (
-    <main className="mx-auto flex min-h-svh w-full max-w-md flex-col justify-center px-4 py-10">
+    <main className="mx-auto flex h-full w-full max-w-md flex-col justify-center overflow-y-auto px-4 py-10">
       <div className="mb-6 flex flex-col items-center gap-2 text-center">
         <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
           <Receipt className="size-5" />

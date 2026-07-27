@@ -15,7 +15,7 @@ export function LanguageToggle() {
   const updateDraft = useInvoiceStore((s) => s.updateDraft)
 
   return (
-    <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1">
+    <div className="flex min-h-11 items-center gap-1 rounded-lg border border-border bg-card p-1">
       <Languages className="ml-1 size-4 text-muted-foreground" aria-hidden />
       {LANGUAGES.map((lng) => (
         <button
@@ -24,7 +24,7 @@ export function LanguageToggle() {
           aria-pressed={language === lng}
           onClick={() => updateDraft({ language: lng })}
           className={cn(
-            "rounded-md px-2.5 py-1 text-xs font-medium uppercase transition-colors",
+            "min-h-9 rounded-md px-2.5 py-1 text-xs font-medium uppercase transition-colors",
             language === lng
               ? "bg-primary text-primary-foreground"
               : "text-muted-foreground hover:text-foreground",

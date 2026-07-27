@@ -118,13 +118,13 @@ export async function completeOnboarding(
     return { error: "Something went wrong finishing setup. Please try again." }
   }
 
-  redirect("/dashboard")
+  redirect("/")
 }
 
 export async function skipOnboarding(): Promise<void> {
   const session = await getSession()
   if (!session) redirect("/login")
-  redirect("/dashboard")
+  redirect("/")
 }
 
 // Standalone preference update, independent of room/tenant setup — usable

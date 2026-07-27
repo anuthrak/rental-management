@@ -19,11 +19,11 @@ export async function proxy(request: NextRequest) {
   return NextResponse.redirect(loginUrl)
 }
 
-// /dashboard covers both the property dashboard and /dashboard/payments (the
-// live Payments route). /payments and /invoices are matched defensively in
-// case those routes are introduced at the top level later. /onboarding lets
-// demo mode through at this layer too, but the page itself requires a real
-// session (onboarding updates a User row, which demo/guest mode doesn't have).
+// "/" is the property dashboard; "/payments" is the Payments route. The
+// invoice generator ("/invoice") stays public — it's a standalone
+// client-side tool that doesn't need an account. /onboarding lets demo mode
+// through at this layer too, but the page itself requires a real session
+// (onboarding updates a User row, which demo/guest mode doesn't have).
 export const config = {
-  matcher: ["/dashboard/:path*", "/payments/:path*", "/invoices/:path*", "/onboarding/:path*"],
+  matcher: ["/", "/payments/:path*", "/onboarding/:path*"],
 }

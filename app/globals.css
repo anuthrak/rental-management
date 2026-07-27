@@ -126,3 +126,12 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Simple Mode is purely content simplification (see the AdvancedSection
+   wrapper and the simpleMode-gated UI throughout the dashboard/payments/
+   invoice generator) — it never resizes chrome. Every control already
+   meets the 44px touch-target minimum via the plain min-h-11/min-h-9
+   utilities in both modes, so there is intentionally no .simple-mode
+   override here; a mode-only height bump previously made square icon
+   buttons (min-w-11 without a matching width bump) stretch out of shape
+   while text buttons grew cleanly, which read as inconsistent sizing. */

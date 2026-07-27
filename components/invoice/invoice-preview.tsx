@@ -4,15 +4,9 @@ import { useMemo } from "react"
 
 import { computeTotals, electricCost, usdToKhr, waterCost, withAmounts } from "@/lib/calc"
 import { formatCurrency, formatKHR, formatNumber } from "@/lib/currency"
+import { formatDateDMY } from "@/lib/date"
 import { useI18n } from "@/components/i18n-provider"
 import { useInvoiceStore } from "@/store/use-invoice-store"
-
-function formatDate(value: string, locale: string): string {
-  if (!value) return "—"
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return "—"
-  return new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(date)
-}
 
 export function InvoicePreview({
   previewRef,
@@ -87,17 +81,17 @@ export function InvoicePreview({
             {t("periodLabel")}
           </span>
           <span className="text-sm">
-            {formatDate(draft.startDate, locale)}
+            {formatDateDMY(draft.startDate)}
           </span>
           <span className="text-sm text-muted-foreground">
-            {formatDate(draft.endDate, locale)}
+            {formatDateDMY(draft.endDate)}
           </span>
           <div className="mt-1.5 flex flex-col gap-0.5">
             <span className="text-xs text-muted-foreground">
-              {t("issuedLabel")}: {formatDate(draft.issueDate, locale)}
+              {t("issuedLabel")}: {formatDateDMY(draft.issueDate)}
             </span>
             <span className="text-xs text-muted-foreground">
-              {t("dueLabel")}: {formatDate(draft.dueDate, locale)}
+              {t("dueLabel")}: {formatDateDMY(draft.dueDate)}
             </span>
           </div>
         </div>

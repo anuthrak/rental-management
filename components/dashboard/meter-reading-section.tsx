@@ -8,7 +8,8 @@ import type { MeterReadingItem } from "@/lib/db/queries"
 import { electricCost, waterCost } from "@/lib/calc"
 import { formatCurrency, formatNumber } from "@/lib/currency"
 import { useI18n } from "@/components/i18n-provider"
-import { logMeterReading } from "@/app/dashboard/actions"
+import { useSimpleModeStore } from "@/store/use-simple-mode-store"
+import { logMeterReading } from "@/app/actions/dashboard"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -21,6 +22,7 @@ export function MeterReadingSection({
   readings: MeterReadingItem[]
 }) {
   const { t, locale } = useI18n()
+  const simpleMode = useSimpleModeStore((s) => s.simpleMode)
   const [isPending, startTransition] = useTransition()
   const [showForm, setShowForm] = useState(false)
   const [waterInput, setWaterInput] = useState("")
@@ -130,7 +132,7 @@ export function MeterReadingSection({
                     {formatNumber(reading.electricMeterValue, locale)} kWh
                   </span>
                 </div>
-                {(waterUsage !== null || electricUsage !== null) && (
+                {!simpleMode && (waterUsage !== null || electricUsage !== null) && (
                   <p className="mt-1 text-muted-foreground">
                     {waterUsage !== null &&
                       `${formatNumber(waterUsage, locale)} m³ (${formatCurrency(waterCost(waterUsage), "USD", locale)})`}

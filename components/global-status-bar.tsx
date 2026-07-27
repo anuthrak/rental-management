@@ -11,7 +11,7 @@ export async function GlobalStatusBar() {
 
   if (demoMode) {
     return (
-      <div className="flex flex-wrap items-center justify-center gap-3 bg-primary px-4 py-2 text-center text-sm text-primary-foreground">
+      <div className="sticky top-0 z-50 flex shrink-0 flex-wrap items-center justify-center gap-3 bg-primary px-4 py-2 text-center text-sm text-primary-foreground">
         <span>Viewing Demo Data — sign up to keep your own rooms, tenants, and invoices.</span>
         <Link href="/signup" className={buttonVariants({ variant: "secondary", size: "sm" })}>
           Create Your Own Account
@@ -29,7 +29,7 @@ export async function GlobalStatusBar() {
   if (!user) return null
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-muted/40 px-4 py-2 text-sm">
+    <div className="sticky top-0 z-50 flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border bg-muted/40 px-4 py-2 text-sm">
       <span className="text-muted-foreground">
         {user.businessName ? (
           <>

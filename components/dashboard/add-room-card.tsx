@@ -5,7 +5,7 @@ import { Plus } from "lucide-react"
 import { toast } from "sonner"
 
 import { useI18n } from "@/components/i18n-provider"
-import { createRoom } from "@/app/dashboard/actions"
+import { createRoom } from "@/app/actions/dashboard"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -57,7 +57,7 @@ export function AddRoomCard() {
       </button>
 
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent>
+        <SheetContent className="data-[side=right]:w-full sm:data-[side=right]:w-3/4">
           <SheetHeader className="border-b">
             <SheetTitle>{t("addRoomTitle")}</SheetTitle>
             <SheetDescription>{t("addRoomDesc")}</SheetDescription>
@@ -83,7 +83,7 @@ export function AddRoomCard() {
                 onChange={(e) => setTargetPrice(e.target.value)}
               />
             </div>
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" disabled={isPending} className="min-h-11">
               {t("createRoomAction")}
             </Button>
           </form>

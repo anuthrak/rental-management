@@ -10,7 +10,7 @@ export async function updateRoomTargetPrice(roomId: string, targetPrice: number)
     where: { id: roomId },
     data: { targetPrice },
   })
-  revalidatePath("/dashboard")
+  revalidatePath("/")
 }
 
 export async function assignTenant(
@@ -38,7 +38,7 @@ export async function assignTenant(
       data: { status: "OCCUPIED" },
     })
   })
-  revalidatePath("/dashboard")
+  revalidatePath("/")
 }
 
 export async function endLease(leaseId: string, roomId: string, tenantId: string) {
@@ -56,7 +56,7 @@ export async function endLease(leaseId: string, roomId: string, tenantId: string
       data: { roomId: null },
     })
   })
-  revalidatePath("/dashboard")
+  revalidatePath("/")
 }
 
 export async function setInvoiceStatus(invoiceId: string, status: "PAID" | "UNPAID") {
@@ -64,8 +64,8 @@ export async function setInvoiceStatus(invoiceId: string, status: "PAID" | "UNPA
     where: { id: invoiceId },
     data: { status },
   })
-  revalidatePath("/dashboard")
-  revalidatePath("/dashboard/payments")
+  revalidatePath("/")
+  revalidatePath("/payments")
 }
 
 export async function logMeterReading(input: {
@@ -82,7 +82,7 @@ export async function logMeterReading(input: {
       notes: input.notes?.trim() ? input.notes.trim() : null,
     },
   })
-  revalidatePath("/dashboard")
+  revalidatePath("/")
 }
 
 export async function createRoom(
@@ -101,8 +101,8 @@ export async function createRoom(
   } catch {
     return { ok: false, error: "Room number already exists" }
   }
-  revalidatePath("/dashboard")
-  revalidatePath("/dashboard/payments")
+  revalidatePath("/")
+  revalidatePath("/payments")
   return { ok: true }
 }
 
@@ -125,5 +125,5 @@ export async function createInvoiceRecord(input: {
       userId: session?.userId ?? null,
     },
   })
-  revalidatePath("/dashboard")
+  revalidatePath("/")
 }

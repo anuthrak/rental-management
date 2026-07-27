@@ -151,6 +151,39 @@ const en = {
   noReadingsYet: "No meter readings logged yet.",
   invoiceMarkedPaidToast: "Invoice marked as paid",
   invoiceMarkedUnpaidToast: "Invoice marked as unpaid",
+
+  // Onboarding — language step & tutorial
+  chooseLanguageTitle: "Choose your language",
+  chooseLanguageDesc: "You can change this anytime from the toggle in the header.",
+  continueAction: "Continue",
+  tutorialButtonLabel: "Tutorial / Help",
+  skipOnboarding: "Skip Onboarding",
+  onboardingBack: "Back",
+  onboardingNext: "Next",
+
+  // Simple Mode
+  simpleModeLabel: "Simple Mode",
+  advancedModeLabel: "Advanced Mode",
+  showAdvancedLabel: "Show More Details",
+  hideAdvancedLabel: "Hide Details",
+  showOnlyUnpaidLabel: "Show only unpaid",
+  billingMonthLabel: "Billing month",
+  viewSavedInvoicesLabel: "View saved invoices",
+  backToPreviewLabel: "Back to preview",
+  allCaughtUpLabel: "All caught up — no overdue rent.",
+  overdueSummaryLabel: "overdue from",
+  overdueSummaryInvoicesLabel: "invoice(s)",
+
+  // Needs Attention quick action view
+  needsAttentionTab: "Needs Attention",
+  allRoomsTab: "All Rooms",
+  noAttentionRooms: "Nothing needs attention right now — every invoice is paid up.",
+  shareInvoiceAction: "Share Invoice",
+  daysOverdueLabel: "days overdue",
+  dueTodayLabel: "Due today",
+  noPhoneOnFile: "No phone on file",
+  shareSentToast: "Shared",
+  shareCopiedToast: "Invoice summary copied to clipboard",
 }
 
 const km: typeof en = {
@@ -302,6 +335,39 @@ const km: typeof en = {
   noReadingsYet: "មិនទាន់មានការកត់ត្រាម៉ែត្រនៅឡើយទេ។",
   invoiceMarkedPaidToast: "វិក្កយបត្របានសម្គាល់ថាបានបង់",
   invoiceMarkedUnpaidToast: "វិក្កយបត្របានសម្គាល់ថាមិនទាន់បង់",
+
+  // Onboarding — language step & tutorial
+  chooseLanguageTitle: "ជ្រើសរើសភាសារបស់អ្នក",
+  chooseLanguageDesc: "អ្នកអាចផ្លាស់ប្តូរវានៅពេលណាក៏បានពីប៊ូតុងនៅក្នុងក្បាលទំព័រ។",
+  continueAction: "បន្ត",
+  tutorialButtonLabel: "មគ្គុទ្ទេសក៍ / ជំនួយ",
+  skipOnboarding: "រំលងការដំឡើង",
+  onboardingBack: "ថយក្រោយ",
+  onboardingNext: "បន្ទាប់",
+
+  // Simple Mode
+  simpleModeLabel: "របៀបសាមញ្ញ",
+  advancedModeLabel: "ទម្រង់លម្អិត",
+  showAdvancedLabel: "ព័ត៌មានលម្អិត",
+  hideAdvancedLabel: "លាក់ព័ត៌មានលម្អិត",
+  showOnlyUnpaidLabel: "បង្ហាញតែមិនទាន់បង់",
+  billingMonthLabel: "ខែគិតថ្លៃ",
+  viewSavedInvoicesLabel: "មើលវិក្កយបត្រដែលបានរក្សាទុក",
+  backToPreviewLabel: "ត្រឡប់ទៅមើលជាមុន",
+  allCaughtUpLabel: "គ្មានអ្វីជំពាក់ទេ — គ្មានឈ្នួលហួសកំណត់។",
+  overdueSummaryLabel: "ហួសកំណត់ពី",
+  overdueSummaryInvoicesLabel: "វិក្កយបត្រ",
+
+  // Needs Attention quick action view
+  needsAttentionTab: "ត្រូវការការយកចិត្តទុកដាក់",
+  allRoomsTab: "បន្ទប់ទាំងអស់",
+  noAttentionRooms: "មិនមានអ្វីត្រូវការការយកចិត្តទុកដាក់ទេ — វិក្កយបត្រទាំងអស់បានបង់ហើយ។",
+  shareInvoiceAction: "ចែករំលែកវិក្កយបត្រ",
+  daysOverdueLabel: "ថ្ងៃហួសកំណត់",
+  dueTodayLabel: "ត្រូវបង់ថ្ងៃនេះ",
+  noPhoneOnFile: "គ្មានលេខទូរស័ព្ទ",
+  shareSentToast: "បានចែករំលែក",
+  shareCopiedToast: "ចម្លងសេចក្ដីសង្ខេបវិក្កយបត្រទៅក្ដារតម្បៀតខ្ទាស់",
 }
 
 export const dictionaries: Record<Language, typeof en> = { en, km }

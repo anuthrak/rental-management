@@ -90,7 +90,7 @@ export function StepSummary({
         </CardContent>
       </Card>
 
-      <Button onClick={onComplete} disabled={isPending} className="w-full">
+      <Button onClick={onComplete} disabled={isPending} className="min-h-11 w-full">
         {isPending ? "Setting up..." : "Complete Setup"}
       </Button>
     </div>

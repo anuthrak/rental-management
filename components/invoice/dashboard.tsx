@@ -2,12 +2,15 @@
 
 import { useRef, useState } from "react"
 import Link from "next/link"
-import { Building2, Receipt } from "lucide-react"
+import { ArrowLeft, Building2, Receipt } from "lucide-react"
 
 import { useI18n } from "@/components/i18n-provider"
 import { useInvoiceStore } from "@/store/use-invoice-store"
+import { useSimpleModeStore } from "@/store/use-simple-mode-store"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { LanguageToggle } from "@/components/language-toggle"
+import { SimpleModeToggle } from "@/components/simple-mode-toggle"
+import { TutorialButton } from "@/components/dashboard/tutorial-button"
 import { InvoiceForm } from "@/components/invoice/invoice-form"
 import { InvoicePreview } from "@/components/invoice/invoice-preview"
 import { InvoiceHistory } from "@/components/invoice/invoice-history"
@@ -17,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export function Dashboard() {
   const { t } = useI18n()
+  const simpleMode = useSimpleModeStore((s) => s.simpleMode)
   const hasHydrated = useInvoiceStore((s) => s.hasHydrated)
   const savedCount = useInvoiceStore((s) => s.savedInvoices.length)
   const previewRef = useRef<HTMLDivElement | null>(null)
@@ -41,14 +45,16 @@ export function Dashboard() {
         </div>
         <div className="flex items-center gap-2">
           <Link
-            href="/dashboard"
-            className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-foreground/70 hover:bg-muted hover:text-foreground"
+            href="/"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-foreground/70 hover:bg-muted hover:text-foreground"
           >
             <Building2 className="size-4" />
             {t("navDashboard")}
           </Link>
+          <SimpleModeToggle />
           <LanguageToggle />
           <ThemeToggle />
+          <TutorialButton />
         </div>
       </header>
 
@@ -73,41 +79,54 @@ export function Dashboard() {
 
           {/* Right: preview + history */}
           <div className="lg:sticky lg:top-6">
-            {/* Segmented control */}
-            <div
-              role="tablist"
-              aria-label={t("preview") + " / " + t("history")}
-              className="flex w-full items-center gap-1 rounded-lg bg-muted p-1"
-            >
-              {(
-                [
-                  { key: "preview", label: t("preview") },
-                  {
-                    key: "history",
-                    label:
-                      t("history") + (savedCount > 0 ? ` (${savedCount})` : ""),
-                  },
-                ] as const
-              ).map((item) => (
+            {simpleMode ? (
+              tab === "history" && (
                 <button
-                  key={item.key}
-                  role="tab"
                   type="button"
-                  aria-selected={tab === item.key}
-                  onClick={() => setTab(item.key)}
-                  className={cn(
-                    "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                    tab === item.key
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
+                  onClick={() => setTab("preview")}
+                  className="mb-3 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
                 >
-                  {item.label}
+                  <ArrowLeft className="size-4" />
+                  {t("backToPreviewLabel")}
                 </button>
-              ))}
-            </div>
+              )
+            ) : (
+              /* Segmented control */
+              <div
+                role="tablist"
+                aria-label={t("preview") + " / " + t("history")}
+                className="flex w-full items-center gap-1 rounded-lg bg-muted p-1"
+              >
+                {(
+                  [
+                    { key: "preview", label: t("preview") },
+                    {
+                      key: "history",
+                      label:
+                        t("history") + (savedCount > 0 ? ` (${savedCount})` : ""),
+                    },
+                  ] as const
+                ).map((item) => (
+                  <button
+                    key={item.key}
+                    role="tab"
+                    type="button"
+                    aria-selected={tab === item.key}
+                    onClick={() => setTab(item.key)}
+                    className={cn(
+                      "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                      tab === item.key
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            )}
 
-            <div className="relative mt-4">
+            <div className={cn("relative", !simpleMode && "mt-4")}>
               {/* Preview stays mounted (moved off-screen when hidden) so it
                   can always be exported/shared from the form actions. */}
               <div
@@ -122,6 +141,16 @@ export function Dashboard() {
                 <InvoiceHistory onLoad={() => setTab("preview")} />
               )}
             </div>
+
+            {simpleMode && tab === "preview" && savedCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setTab("history")}
+                className="mt-3 min-h-11 text-sm font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground"
+              >
+                {t("viewSavedInvoicesLabel")} ({savedCount})
+              </button>
+            )}
           </div>
         </div>
       )}
