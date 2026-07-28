@@ -28,7 +28,7 @@ export function PageHeader({
   tutorialPageId: TutorialPageId
 }) {
   return (
-    <header className="sticky top-0 z-40 -mx-4 mb-6 flex items-center justify-between gap-4 bg-background/95 px-4 py-3 backdrop-blur supports-backdrop-filter:bg-background/80 sm:-mx-6 sm:px-6 lg:mb-8">
+    <header className="sticky top-11 z-40 -mx-4 mb-6 flex items-center justify-between gap-4 bg-background/95 px-4 py-3 backdrop-blur supports-backdrop-filter:bg-background/80 sm:-mx-6 sm:px-6 lg:mb-8">
       <div className="flex min-w-0 items-center gap-3">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
           <Icon className="size-5" />

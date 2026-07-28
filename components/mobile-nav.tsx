@@ -56,10 +56,9 @@ export function MobileNav() {
     <>
       <nav
         aria-label="Primary"
-        className="fixed inset-x-0 bottom-0 z-50 flex items-stretch gap-1 border-t border-border bg-card px-2 pt-1 sm:hidden"
+        className="fixed inset-x-0 bottom-0 z-50 flex min-h-11 items-stretch gap-1 border-t border-border bg-card px-2 pt-2 sm:hidden"
         style={{
-          height: "var(--bottom-nav-height)",
-          paddingBottom: "env(safe-area-inset-bottom)",
+          paddingBottom: "max(env(safe-area-inset-bottom), 1.25rem)",
         }}
       >
         <NavTab href="/" icon={Building2} label={t("navDashboard")} active={pathname === "/"} />

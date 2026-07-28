@@ -1,6 +1,8 @@
 "use client"
 
 import { useOnboardingStore, type OnboardingCurrency } from "@/store/use-onboarding-store"
+import type { TranslationKey } from "@/lib/i18n"
+import { useI18n } from "@/components/i18n-provider"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -13,12 +15,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-const CURRENCY_LABELS: Record<OnboardingCurrency, string> = {
-  USD: "USD ($)",
-  KHR: "KHR (៛)",
+const CURRENCY_LABEL_KEYS: Record<OnboardingCurrency, TranslationKey> = {
+  USD: "currencyUsdLabel",
+  KHR: "currencyKhrLabel",
 }
 
 export function StepPreferences() {
+  const { t } = useI18n()
   const currency = useOnboardingStore((s) => s.currency)
   const setCurrency = useOnboardingStore((s) => s.setCurrency)
   const waterRate = useOnboardingStore((s) => s.waterRate)
@@ -31,18 +34,20 @@ export function StepPreferences() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="default-currency">Default currency</Label>
+        <Label htmlFor="default-currency">{t("defaultCurrencyField")}</Label>
         <Select value={currency} onValueChange={(v) => setCurrency(v as OnboardingCurrency)}>
           <SelectTrigger id="default-currency" className="h-11 w-full sm:w-64">
             <SelectValue>
-              {(value: OnboardingCurrency | null) => (value ? CURRENCY_LABELS[value] : "Select a currency")}
+              {(value: OnboardingCurrency | null) =>
+                value ? t(CURRENCY_LABEL_KEYS[value]) : t("selectCurrencyPlaceholder")
+              }
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              {(Object.keys(CURRENCY_LABELS) as OnboardingCurrency[]).map((c) => (
+              {(Object.keys(CURRENCY_LABEL_KEYS) as OnboardingCurrency[]).map((c) => (
                 <SelectItem key={c} value={c}>
-                  {CURRENCY_LABELS[c]}
+                  {t(CURRENCY_LABEL_KEYS[c])}
                 </SelectItem>
               ))}
             </SelectGroup>
@@ -52,7 +57,7 @@ export function StepPreferences() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="water-rate">Water rate ($/m³)</Label>
+          <Label htmlFor="water-rate">{t("waterRateField")}</Label>
           <Input
             id="water-rate"
             type="number"
@@ -64,7 +69,7 @@ export function StepPreferences() {
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="electric-rate">Electricity rate ($/kW)</Label>
+          <Label htmlFor="electric-rate">{t("electricRateField")}</Label>
           <Input
             id="electric-rate"
             type="number"
@@ -78,16 +83,14 @@ export function StepPreferences() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="invoice-note">Invoice payment note template</Label>
+        <Label htmlFor="invoice-note">{t("invoiceNoteTemplateField")}</Label>
         <Textarea
           id="invoice-note"
           rows={5}
           value={invoiceNoteTemplate}
           onChange={(e) => setInvoiceNoteTemplate(e.target.value)}
         />
-        <p className="text-xs text-muted-foreground">
-          Shown on every invoice you generate unless you override it for a specific invoice.
-        </p>
+        <p className="text-xs text-muted-foreground">{t("invoiceNoteTemplateDesc")}</p>
       </div>
     </div>
   )

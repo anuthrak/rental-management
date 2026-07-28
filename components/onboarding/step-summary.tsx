@@ -5,6 +5,7 @@ import { CheckCircle2 } from "lucide-react"
 
 import { resolveRooms, useOnboardingStore } from "@/store/use-onboarding-store"
 import { formatCurrency } from "@/lib/currency"
+import { useI18n } from "@/components/i18n-provider"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 
@@ -17,6 +18,7 @@ export function StepSummary({
   onComplete: () => void
   isPending: boolean
 }) {
+  const { t } = useI18n()
   const propertyName = useOnboardingStore((s) => s.propertyName)
   const pricingModel = useOnboardingStore((s) => s.pricingModel)
   const standardRoomCount = useOnboardingStore((s) => s.standardRoomCount)
@@ -42,39 +44,39 @@ export function StepSummary({
               <CheckCircle2 className="size-4" />
             </span>
             <h3 className="font-heading text-base font-medium">
-              {propertyName || "Your property"}
+              {propertyName || t("yourPropertyFallback")}
             </h3>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-0.5">
-              <span className="text-xs text-muted-foreground">Rooms created</span>
+              <span className="text-xs text-muted-foreground">{t("roomsCreatedLabel")}</span>
               <span className="text-lg font-semibold tabular-nums">{rooms.length}</span>
             </div>
             <div className="flex flex-col gap-0.5">
-              <span className="text-xs text-muted-foreground">Active tenants added</span>
+              <span className="text-xs text-muted-foreground">{t("activeTenantsAddedLabel")}</span>
               <span className="text-lg font-semibold tabular-nums">{tenants.length}</span>
             </div>
             <div className="flex flex-col gap-0.5">
-              <span className="text-xs text-muted-foreground">Total monthly rent (rooms)</span>
+              <span className="text-xs text-muted-foreground">{t("totalMonthlyRentLabel")}</span>
               <span className="text-lg font-semibold tabular-nums">
                 {formatCurrency(totalMonthlyRent, "USD")}
               </span>
             </div>
             <div className="flex flex-col gap-0.5">
-              <span className="text-xs text-muted-foreground">Default currency</span>
+              <span className="text-xs text-muted-foreground">{t("defaultCurrencyField")}</span>
               <span className="text-lg font-semibold">
                 {currency} ({CURRENCY_SYMBOL[currency]})
               </span>
             </div>
             <div className="flex flex-col gap-0.5">
-              <span className="text-xs text-muted-foreground">Water rate</span>
+              <span className="text-xs text-muted-foreground">{t("waterRateLabel")}</span>
               <span className="text-lg font-semibold tabular-nums">
                 {formatCurrency(waterRate, "USD")}/m³
               </span>
             </div>
             <div className="flex flex-col gap-0.5">
-              <span className="text-xs text-muted-foreground">Electricity rate</span>
+              <span className="text-xs text-muted-foreground">{t("electricRateLabel")}</span>
               <span className="text-lg font-semibold tabular-nums">
                 {formatCurrency(electricRate, "USD")}/kW
               </span>
@@ -83,15 +85,14 @@ export function StepSummary({
 
           {rooms.length === 0 && (
             <p className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
-              No rooms have been added yet — you can still complete setup and add rooms later
-              from the dashboard.
+              {t("noRoomsAddedYetText")}
             </p>
           )}
         </CardContent>
       </Card>
 
       <Button onClick={onComplete} disabled={isPending} className="min-h-11 w-full">
-        {isPending ? "Setting up..." : "Complete Setup"}
+        {isPending ? t("settingUpText") : t("completeSetupAction")}
       </Button>
     </div>
   )

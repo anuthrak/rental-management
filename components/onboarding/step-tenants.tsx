@@ -10,6 +10,8 @@ import {
   type SecurityDepositStatus,
 } from "@/store/use-onboarding-store"
 import { formatCurrency } from "@/lib/currency"
+import type { TranslationKey } from "@/lib/i18n"
+import { useI18n } from "@/components/i18n-provider"
 import { AdvancedSection } from "@/components/simple-mode/advanced-section"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,13 +26,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-const DEPOSIT_STATUS_LABELS: Record<SecurityDepositStatus, string> = {
-  HELD: "Held",
-  REFUNDED: "Refunded",
-  APPLIED_TO_RENT: "Applied to rent",
+const DEPOSIT_STATUS_KEYS: Record<SecurityDepositStatus, TranslationKey> = {
+  HELD: "depositStatusHeld",
+  REFUNDED: "depositStatusRefunded",
+  APPLIED_TO_RENT: "depositStatusAppliedToRent",
 }
 
 export function StepTenants() {
+  const { t } = useI18n()
   const pricingModel = useOnboardingStore((s) => s.pricingModel)
   const standardRoomCount = useOnboardingStore((s) => s.standardRoomCount)
   const standardBaseRate = useOnboardingStore((s) => s.standardBaseRate)
@@ -43,7 +46,7 @@ export function StepTenants() {
   const addTenant = useOnboardingStore((s) => s.addTenant)
   const removeTenant = useOnboardingStore((s) => s.removeTenant)
 
-  const assignedRoomIds = useMemo(() => new Set(tenants.map((t) => t.roomId)), [tenants])
+  const assignedRoomIds = useMemo(() => new Set(tenants.map((tn) => tn.roomId)), [tenants])
   const availableRooms = rooms.filter((r) => !assignedRoomIds.has(r.id))
 
   const [draft, setDraft] = useState(() => createTenantDraft(""))
@@ -65,29 +68,31 @@ export function StepTenants() {
     <div className="flex flex-col gap-6">
       {tenants.length > 0 && (
         <div className="flex flex-col gap-2">
-          <Label>Tenants added ({tenants.length})</Label>
+          <Label>
+            {t("tenantsAddedLabel")} ({tenants.length})
+          </Label>
           <div className="flex flex-col gap-2">
-            {tenants.map((t) => (
+            {tenants.map((tenant) => (
               <div
-                key={t.id}
+                key={tenant.id}
                 className="flex items-center justify-between gap-2 rounded-lg border border-border p-3 text-sm"
               >
                 <div className="flex flex-col">
                   <span className="font-medium">
-                    {t.fullName || "Unnamed tenant"} · {roomLabel(t.roomId)}
+                    {tenant.fullName || t("unnamedTenantLabel")} · {roomLabel(tenant.roomId)}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {formatCurrency(t.agreedRent, "USD")}/mo · deposit{" "}
-                    {formatCurrency(t.securityDeposit, "USD")} (
-                    {DEPOSIT_STATUS_LABELS[t.securityDepositStatus]})
+                    {formatCurrency(tenant.agreedRent, "USD")}/mo · {t("depositWordLabel")}{" "}
+                    {formatCurrency(tenant.securityDeposit, "USD")} (
+                    {t(DEPOSIT_STATUS_KEYS[tenant.securityDepositStatus])})
                   </span>
                 </div>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  aria-label={`Remove ${t.fullName || "tenant"}`}
-                  onClick={() => removeTenant(t.id)}
+                  aria-label={`${t("removeAction")} ${tenant.fullName || ""}`}
+                  onClick={() => removeTenant(tenant.id)}
                 >
                   <Trash2 className="text-destructive" />
                 </Button>
@@ -99,19 +104,18 @@ export function StepTenants() {
 
       {rooms.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
-          Go back to Step 1 and add at least one room before assigning tenants.
+          {t("noRoomsForTenantsText")}
         </p>
       ) : availableRooms.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
-          Every room has a tenant assigned. This step is optional — continue whenever you&apos;re
-          ready.
+          {t("allRoomsAssignedText")}
         </p>
       ) : (
         <form onSubmit={handleAdd} className="flex flex-col gap-4 rounded-lg border border-border p-4">
-          <h3 className="font-heading text-sm font-medium">Add a tenant</h3>
+          <h3 className="font-heading text-sm font-medium">{t("addTenantTitle")}</h3>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="tenant-room">Room</Label>
+              <Label htmlFor="tenant-room">{t("roomLabel")}</Label>
               <Select
                 value={draft.roomId}
                 onValueChange={(value) => {
@@ -123,7 +127,7 @@ export function StepTenants() {
                 <SelectTrigger id="tenant-room" className="h-11 w-full">
                   <SelectValue>
                     {(value: string | null) =>
-                      rooms.find((r) => r.id === value)?.roomNumber ?? "Select a room"
+                      rooms.find((r) => r.id === value)?.roomNumber ?? t("selectRoomPlaceholder")
                     }
                   </SelectValue>
                 </SelectTrigger>
@@ -139,27 +143,27 @@ export function StepTenants() {
               </Select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="tenant-name">Full name</Label>
+              <Label htmlFor="tenant-name">{t("fullNameField")}</Label>
               <Input
                 id="tenant-name"
                 className="h-11 w-full"
                 value={draft.fullName}
                 onChange={(e) => patchDraft({ fullName: e.target.value })}
-                placeholder="Jane Doe"
+                placeholder={t("tenantNamePlaceholder")}
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="tenant-phone">Phone</Label>
+              <Label htmlFor="tenant-phone">{t("phoneField")}</Label>
               <Input
                 id="tenant-phone"
                 className="h-11 w-full"
                 value={draft.phone}
                 onChange={(e) => patchDraft({ phone: e.target.value })}
-                placeholder="+855 12 345 678"
+                placeholder={t("phoneNumberPlaceholder")}
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="tenant-email">Email</Label>
+              <Label htmlFor="tenant-email">{t("authEmailLabel")}</Label>
               <Input
                 id="tenant-email"
                 type="email"
@@ -169,7 +173,7 @@ export function StepTenants() {
               />
             </div>
             <div className="flex flex-col gap-1.5 sm:col-span-2">
-              <Label htmlFor="tenant-id">National ID / Passport #</Label>
+              <Label htmlFor="tenant-id">{t("nationalIdPassportField")}</Label>
               <Input
                 id="tenant-id"
                 className="h-11 w-full"
@@ -183,7 +187,7 @@ export function StepTenants() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="lease-start">Lease start</Label>
+              <Label htmlFor="lease-start">{t("leaseStartField")}</Label>
               <Input
                 id="lease-start"
                 type="date"
@@ -193,7 +197,7 @@ export function StepTenants() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="lease-end">Lease end (optional)</Label>
+              <Label htmlFor="lease-end">{t("leaseEndOptionalField")}</Label>
               <Input
                 id="lease-end"
                 type="date"
@@ -203,7 +207,7 @@ export function StepTenants() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="agreed-rent">Agreed rent ($/mo)</Label>
+              <Label htmlFor="agreed-rent">{t("agreedRentDollarField")}</Label>
               <Input
                 id="agreed-rent"
                 type="number"
@@ -219,7 +223,7 @@ export function StepTenants() {
           <AdvancedSection>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="deposit">Security deposit</Label>
+                <Label htmlFor="deposit">{t("securityDepositField")}</Label>
                 <Input
                   id="deposit"
                   type="number"
@@ -231,7 +235,7 @@ export function StepTenants() {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="deposit-status">Deposit status</Label>
+                <Label htmlFor="deposit-status">{t("depositStatusField")}</Label>
                 <Select
                   value={draft.securityDepositStatus}
                   onValueChange={(v) => patchDraft({ securityDepositStatus: v as SecurityDepositStatus })}
@@ -239,15 +243,15 @@ export function StepTenants() {
                   <SelectTrigger id="deposit-status" className="h-11 w-full">
                     <SelectValue>
                       {(value: SecurityDepositStatus | null) =>
-                        value ? DEPOSIT_STATUS_LABELS[value] : "Select a status"
+                        value ? t(DEPOSIT_STATUS_KEYS[value]) : t("selectStatusPlaceholder")
                       }
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      {(Object.keys(DEPOSIT_STATUS_LABELS) as SecurityDepositStatus[]).map((status) => (
+                      {(Object.keys(DEPOSIT_STATUS_KEYS) as SecurityDepositStatus[]).map((status) => (
                         <SelectItem key={status} value={status}>
-                          {DEPOSIT_STATUS_LABELS[status]}
+                          {t(DEPOSIT_STATUS_KEYS[status])}
                         </SelectItem>
                       ))}
                     </SelectGroup>
@@ -255,7 +259,7 @@ export function StepTenants() {
                 </Select>
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="water-start">Initial water meter (m³)</Label>
+                <Label htmlFor="water-start">{t("waterMeterStartField")}</Label>
                 <Input
                   id="water-start"
                   type="number"
@@ -267,7 +271,7 @@ export function StepTenants() {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="electric-start">Initial electric meter (kW)</Label>
+                <Label htmlFor="electric-start">{t("electricMeterStartField")}</Label>
                 <Input
                   id="electric-start"
                   type="number"
@@ -290,7 +294,7 @@ export function StepTenants() {
               disabled={!draft.roomId || !draft.fullName.trim()}
             >
               <UserPlus data-icon="inline-start" />
-              Add tenant
+              {t("addTenantAction")}
             </Button>
           </div>
         </form>

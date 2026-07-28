@@ -1,10 +1,9 @@
 import Link from "next/link"
-import { LogOut } from "lucide-react"
 
 import { prisma } from "@/lib/prisma"
 import { getSession, isDemoMode } from "@/lib/auth/session"
-import { logoutAction } from "@/app/login/actions"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { LogoutButton } from "@/components/logout-button"
+import { buttonVariants } from "@/components/ui/button"
 
 function capitalizeEmailPrefix(email: string): string {
   const prefix = email.split("@")[0] || email
@@ -17,7 +16,7 @@ export async function GlobalStatusBar() {
 
   if (demoMode) {
     return (
-      <div className="flex shrink-0 items-center justify-center gap-3 overflow-hidden bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground">
+      <div className="sticky top-0 z-50 flex min-h-11 shrink-0 items-center justify-center gap-3 overflow-hidden bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground">
         <span className="min-w-0 truncate">
           <span className="sm:hidden">Viewing Demo Data</span>
           <span className="hidden sm:inline">
@@ -46,7 +45,7 @@ export async function GlobalStatusBar() {
   const displayName = user.name?.trim() || capitalizeEmailPrefix(user.email)
 
   return (
-    <div className="flex shrink-0 items-center justify-center gap-3 overflow-hidden border-b border-border bg-muted/40 px-3 py-2 text-center text-sm font-medium">
+    <div className="sticky top-0 z-50 flex min-h-11 shrink-0 items-center justify-center gap-3 overflow-hidden border-b border-border bg-background/95 px-3 py-2 text-center text-sm font-medium backdrop-blur supports-backdrop-filter:bg-background/80">
       <span className="min-w-0 truncate text-muted-foreground">
         {user.businessName ? (
           <>
@@ -58,18 +57,7 @@ export async function GlobalStatusBar() {
           <span className="font-medium text-foreground">{displayName}</span>
         )}
       </span>
-      <form action={logoutAction} className="shrink-0">
-        <Button
-          type="submit"
-          variant="ghost"
-          size="sm"
-          aria-label="Log Out"
-          className="min-h-11 sm:min-h-8"
-        >
-          <LogOut data-icon="inline-start" />
-          <span className="hidden sm:inline">Log Out</span>
-        </Button>
-      </form>
+      <LogoutButton />
     </div>
   )
 }

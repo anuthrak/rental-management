@@ -5,6 +5,7 @@ import { Plus, Trash2 } from "lucide-react"
 import { useOnboardingStore } from "@/store/use-onboarding-store"
 import { useSimpleModeStore } from "@/store/use-simple-mode-store"
 import { formatCurrency } from "@/lib/currency"
+import { useI18n } from "@/components/i18n-provider"
 import { AdvancedSection } from "@/components/simple-mode/advanced-section"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 
 export function StepProperty() {
+  const { t } = useI18n()
   const simpleMode = useSimpleModeStore((s) => s.simpleMode)
   const propertyName = useOnboardingStore((s) => s.propertyName)
   const setPropertyName = useOnboardingStore((s) => s.setPropertyName)
@@ -29,18 +31,18 @@ export function StepProperty() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="propertyName">Property / business name</Label>
+        <Label htmlFor="propertyName">{t("propertyNameField")}</Label>
         <Input
           id="propertyName"
           className="h-11 w-full"
           value={propertyName}
           onChange={(e) => setPropertyName(e.target.value)}
-          placeholder="e.g. Riverside Apartments"
+          placeholder={t("propertyNamePlaceholder")}
         />
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label>Pricing model</Label>
+        <Label>{t("pricingModelField")}</Label>
         <div className={cn("grid gap-3", !simpleMode && "sm:grid-cols-2")}>
           <button
             type="button"
@@ -52,10 +54,8 @@ export function StepProperty() {
                 : "border-border hover:bg-muted",
             )}
           >
-            <span className="font-medium">Standardized</span>
-            <span className="text-sm text-muted-foreground">
-              Auto-generate rooms with one base rate — quick setup for uniform pricing.
-            </span>
+            <span className="font-medium">{t("pricingStandardTitle")}</span>
+            <span className="text-sm text-muted-foreground">{t("pricingStandardDesc")}</span>
           </button>
           {!simpleMode && (
             <button
@@ -68,10 +68,8 @@ export function StepProperty() {
                   : "border-border hover:bg-muted",
               )}
             >
-              <span className="font-medium">Custom</span>
-              <span className="text-sm text-muted-foreground">
-                Add each room by hand with its own name and rate.
-              </span>
+              <span className="font-medium">{t("pricingCustomTitle")}</span>
+              <span className="text-sm text-muted-foreground">{t("pricingCustomDesc")}</span>
             </button>
           )}
         </div>
@@ -87,10 +85,8 @@ export function StepProperty() {
                   : "border-border hover:bg-muted",
               )}
             >
-              <span className="font-medium">Custom</span>
-              <span className="text-sm text-muted-foreground">
-                Add each room by hand with its own name and rate.
-              </span>
+              <span className="font-medium">{t("pricingCustomTitle")}</span>
+              <span className="text-sm text-muted-foreground">{t("pricingCustomDesc")}</span>
             </button>
           </AdvancedSection>
         )}
@@ -99,7 +95,7 @@ export function StepProperty() {
       {pricingModel === "standard" ? (
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="roomCount">Number of rooms</Label>
+            <Label htmlFor="roomCount">{t("numberOfRoomsField")}</Label>
             <Input
               id="roomCount"
               type="number"
@@ -111,7 +107,7 @@ export function StepProperty() {
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="baseRate">Base rate ($/mo)</Label>
+            <Label htmlFor="baseRate">{t("baseRateField")}</Label>
             <Input
               id="baseRate"
               type="number"
@@ -124,9 +120,10 @@ export function StepProperty() {
           </div>
           {standardRoomCount > 0 && (
             <p className="text-sm text-muted-foreground sm:col-span-2">
-              Will create <strong>Room 101</strong> through{" "}
-              <strong>Room {100 + standardRoomCount}</strong>, each at{" "}
-              {formatCurrency(standardBaseRate, "USD")}/mo.
+              {t("willCreateRoomsPrefix")} <strong>Room 101</strong> {t("willCreateRoomsThrough")}{" "}
+              <strong>Room {100 + standardRoomCount}</strong>, {t("willCreateRoomsSuffix")}{" "}
+              {formatCurrency(standardBaseRate, "USD")}
+              {t("perMonthSuffix")}
             </p>
           )}
         </div>
@@ -134,7 +131,7 @@ export function StepProperty() {
         <div className="flex flex-col gap-3">
           {customRooms.length === 0 && (
             <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
-              No rooms yet. Add one to get started.
+              {t("noRoomsYetText")}
             </p>
           )}
           {customRooms.map((room, index) => (
@@ -143,7 +140,7 @@ export function StepProperty() {
               className="flex flex-col gap-2 rounded-lg border border-border p-3 sm:flex-row sm:items-end sm:rounded-none sm:border-0 sm:p-0"
             >
               <div className="flex-1">
-                <Label className="mb-1 text-xs text-muted-foreground">Room name</Label>
+                <Label className="mb-1 text-xs text-muted-foreground">{t("roomNameField")}</Label>
                 <Input
                   className="h-11 w-full"
                   value={room.roomNumber}
@@ -153,7 +150,7 @@ export function StepProperty() {
               </div>
               <div className="flex items-end gap-2">
                 <div className="flex-1 sm:w-32 sm:flex-none">
-                  <Label className="mb-1 text-xs text-muted-foreground">Rate ($/mo)</Label>
+                  <Label className="mb-1 text-xs text-muted-foreground">{t("rateField")}</Label>
                   <Input
                     type="number"
                     min={0}
@@ -170,7 +167,7 @@ export function StepProperty() {
                   variant="ghost"
                   size="icon"
                   className="h-11 w-11 shrink-0"
-                  aria-label={`Remove ${room.roomNumber || "room"}`}
+                  aria-label={`${t("removeAction")} ${room.roomNumber || ""}`}
                   onClick={() => removeCustomRoom(room.id)}
                 >
                   <Trash2 className="text-destructive" />
@@ -181,7 +178,7 @@ export function StepProperty() {
           <div>
             <Button type="button" variant="secondary" size="sm" onClick={addCustomRoom}>
               <Plus data-icon="inline-start" />
-              Add room
+              {t("addRoom")}
             </Button>
           </div>
         </div>

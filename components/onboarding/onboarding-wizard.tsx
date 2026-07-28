@@ -49,7 +49,7 @@ export function OnboardingWizard() {
 
   function handleNext() {
     if (step === 1 && !canProceedFromStep1()) {
-      toast.error("Enter a property name, and make sure every custom room has a name and rate.")
+      toast.error(t("onboardingIncompleteToast"))
       return
     }
     setStep(Math.min(4, step + 1))
@@ -69,19 +69,19 @@ export function OnboardingWizard() {
         electricRate,
         invoiceNoteTemplate,
         rooms: rooms.map((r) => ({ roomNumber: r.roomNumber, targetPrice: r.targetPrice })),
-        tenants: tenants.map((t) => ({
-          roomNumber: roomByDraftId.get(t.roomId)?.roomNumber ?? "",
-          fullName: t.fullName,
-          phone: t.phone,
-          email: t.email,
-          nationalId: t.nationalId,
-          leaseStartDate: t.leaseStartDate,
-          leaseEndDate: t.leaseEndDate,
-          agreedRent: t.agreedRent,
-          securityDeposit: t.securityDeposit,
-          securityDepositStatus: t.securityDepositStatus,
-          waterMeterStart: t.waterMeterStart,
-          electricMeterStart: t.electricMeterStart,
+        tenants: tenants.map((tenant) => ({
+          roomNumber: roomByDraftId.get(tenant.roomId)?.roomNumber ?? "",
+          fullName: tenant.fullName,
+          phone: tenant.phone,
+          email: tenant.email,
+          nationalId: tenant.nationalId,
+          leaseStartDate: tenant.leaseStartDate,
+          leaseEndDate: tenant.leaseEndDate,
+          agreedRent: tenant.agreedRent,
+          securityDeposit: tenant.securityDeposit,
+          securityDepositStatus: tenant.securityDepositStatus,
+          waterMeterStart: tenant.waterMeterStart,
+          electricMeterStart: tenant.electricMeterStart,
         })),
       })
       if (result?.error) {
@@ -91,29 +91,31 @@ export function OnboardingWizard() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 overflow-x-hidden px-4 py-6 sm:gap-8 sm:py-10">
-      <div className="flex items-center justify-between gap-4">
-        {step === 0 ? (
-          <div />
-        ) : (
-          <div>
-            <h1 className="font-heading text-xl font-semibold">Set up your property</h1>
-            <p className="text-sm text-muted-foreground">
-              A few quick steps to get your dashboard ready. You can change any of this later.
-            </p>
-          </div>
-        )}
-        <div className="flex items-center gap-2">
-          <LanguageToggle />
-          <form action={skipOnboarding}>
-            <Button type="submit" variant="ghost" size="sm" className="min-h-11">
-              {t("skipOnboarding")}
-            </Button>
-          </form>
-        </div>
+    <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 overflow-x-hidden px-4 py-6 sm:gap-6 sm:py-10">
+      {/* Row 1: language toggle + skip */}
+      <div className="flex items-center justify-between gap-2">
+        <LanguageToggle />
+        <form action={skipOnboarding}>
+          <Button type="submit" variant="ghost" size="sm" className="min-h-11">
+            {t("skipOnboarding")}
+          </Button>
+        </form>
       </div>
 
-      {step > 0 && <StepIndicator current={step} />}
+      {/* Row 2: title + subtitle */}
+      {step > 0 && (
+        <div className="w-full">
+          <h1 className="font-heading text-xl font-semibold">{t("onboardingTitle")}</h1>
+          <p className="text-sm text-muted-foreground">{t("onboardingSubtitle")}</p>
+        </div>
+      )}
+
+      {/* Row 3: step timeline */}
+      {step > 0 && (
+        <div className="flex w-full items-center justify-between">
+          <StepIndicator current={step} />
+        </div>
+      )}
 
       <div className="flex-1">
         {step === 0 && <StepLanguage onContinue={() => setStep(1)} />}
