@@ -177,6 +177,48 @@ const en = {
   overdueSummaryLabel: "overdue from",
   overdueSummaryInvoicesLabel: "invoice(s)",
 
+  // Per-page tutorials
+  tutorialNext: "Next",
+  tutorialBack: "Back",
+  tutorialSkip: "Skip",
+  tutorialDone: "Done",
+  dashboardTutorialStep1Title: "Property Overview & KPI Cards",
+  dashboardTutorialStep1Body:
+    "The cards at the top show your occupancy rate (occupied vs. vacant rooms), rent collected this month, overdue rent, and how many invoices are overdue — a snapshot of your whole property at a glance.",
+  dashboardTutorialStep2Title: "Managing Rooms",
+  dashboardTutorialStep2Body:
+    "Tap any room card to open it. From there you can assign a new tenant and set their agreed rent, edit the room's target price, or end a lease to mark the room vacant again.",
+  dashboardTutorialStep3Title: "Fast Actions & Getting Started",
+  dashboardTutorialStep3Body:
+    "Use the Add Room card to register a new room in seconds, and open any occupied room to log its water and electricity meter readings — both feed straight into your next invoice.",
+  invoiceTutorialStep1Title: "Starting a Draft",
+  invoiceTutorialStep1Body:
+    "Generate an invoice directly from a room's drawer on the Dashboard and it arrives here pre-filled with the tenant's name, room number, and their agreed rent pulled straight from the active lease — or start from scratch and fill in the details yourself.",
+  invoiceTutorialStep2Title: "Utility & Meter Line Items",
+  invoiceTutorialStep2Body:
+    "Enter this period's water and electricity usage and RentLedger calculates the cost per unit automatically, adding each as its own line item alongside rent, WiFi, or any other charges you add.",
+  invoiceTutorialStep3Title: "Issuing & Exporting",
+  invoiceTutorialStep3Body:
+    "Export the finished invoice as a PDF or PNG image, share it straight to WhatsApp, Telegram, or Line, and save it to your history so you can track whether it's been paid from the Payments page.",
+  paymentsTutorialStep1Title: "Payment Tracking",
+  paymentsTutorialStep1Body:
+    "Every invoice you've issued appears here. Filter by unpaid, overdue, or paid, and mark an invoice as paid the moment a tenant settles their rent — or back to unpaid if you need to correct it.",
+  paymentsTutorialStep2Title: "Utility Logs",
+  paymentsTutorialStep2Body:
+    "Looking for a room's water and electricity history? Open that room from the Dashboard — its meter reading log lives in the room drawer, showing every reading over time.",
+  paymentsTutorialStep3Title: "Keeping Your Numbers Current",
+  paymentsTutorialStep3Body:
+    "The moment you mark an invoice paid here, it's reflected immediately in the Dashboard's Rent Collected and Overdue Rent totals — no separate reconciliation step needed.",
+
+  // More sheet setting rows
+  simpleModeSettingDesc: "Simplify the dashboard down to what needs your attention",
+  themeSettingTitle: "Appearance",
+  themeSettingDesc: "Switch between light and dark mode",
+  languageSettingTitle: "Language",
+  languageSettingDesc: "English or Khmer",
+  helpSettingTitle: "Help & Tutorials",
+  helpSettingDesc: "Replay this page's walkthrough anytime",
+
   // Needs Attention quick action view
   needsAttentionTab: "Needs Attention",
   allRoomsTab: "All Rooms",
@@ -363,6 +405,48 @@ const km: typeof en = {
   allCaughtUpLabel: "គ្មានអ្វីជំពាក់ទេ — គ្មានឈ្នួលហួសកំណត់។",
   overdueSummaryLabel: "ហួសកំណត់ពី",
   overdueSummaryInvoicesLabel: "វិក្កយបត្រ",
+
+  // Per-page tutorials
+  tutorialNext: "បន្ទាប់",
+  tutorialBack: "ថយក្រោយ",
+  tutorialSkip: "រំលង",
+  tutorialDone: "រួចរាល់",
+  dashboardTutorialStep1Title: "ទិដ្ឋភាពទូទៅអចលនទ្រព្យ",
+  dashboardTutorialStep1Body:
+    "កាតនៅផ្នែកខាងលើបង្ហាញអត្រាកាន់កាប់ (បន្ទប់កាន់កាប់ធៀបនឹងទំនេរ) ថ្លៃឈ្នួលប្រមូលបានក្នុងខែនេះ ថ្លៃឈ្នួលហួសកំណត់ និងចំនួនវិក្កយបត្រហួសកំណត់ — ជាទិដ្ឋភាពសង្ខេបនៃអចលនទ្រព្យទាំងមូលរបស់អ្នក។",
+  dashboardTutorialStep2Title: "ការគ្រប់គ្រងបន្ទប់",
+  dashboardTutorialStep2Body:
+    "ចុចលើបន្ទប់ណាមួយដើម្បីបើកវា។ ពីទីនោះ អ្នកអាចកំណត់អ្នកជួលថ្មី និងកំណត់ថ្លៃឈ្នួលព្រមព្រៀង កែប្រែថ្លៃគោលដៅរបស់បន្ទប់ ឬបញ្ចប់កិច្ចសន្យាដើម្បីធ្វើឱ្យបន្ទប់ទំនេរឡើងវិញ។",
+  dashboardTutorialStep3Title: "សកម្មភាពរហ័ស",
+  dashboardTutorialStep3Body:
+    "ប្រើកាតបន្ថែមបន្ទប់ដើម្បីចុះឈ្មោះបន្ទប់ថ្មីក្នុងរយៈពេលប៉ុន្មានវិនាទី ហើយបើកបន្ទប់ដែលកាន់កាប់ណាមួយដើម្បីកត់ត្រាការអានឧបករណ៍វាស់ទឹក និងអគ្គិសនី — ទាំងពីរនេះនឹងបញ្ចូលទៅក្នុងវិក្កយបត្របន្ទាប់របស់អ្នកភ្លាមៗ។",
+  invoiceTutorialStep1Title: "ការចាប់ផ្តើមព្រាងវិក្កយបត្រ",
+  invoiceTutorialStep1Body:
+    "បង្កើតវិក្កយបត្រដោយផ្ទាល់ពីប្រអប់បន្ទប់នៅផ្ទាំងគ្រប់គ្រង ហើយវានឹងបំពេញឈ្មោះអ្នកជួល លេខបន្ទប់ និងថ្លៃឈ្នួលព្រមព្រៀងពីកិច្ចសន្យាសកម្មដោយស្វ័យប្រវត្តិ — ឬចាប់ផ្តើមពីទទេ ហើយបំពេញព័ត៌មានដោយខ្លួនឯង។",
+  invoiceTutorialStep2Title: "ការគណនាឧបករណ៍ប្រើប្រាស់",
+  invoiceTutorialStep2Body:
+    "បញ្ចូលបរិមាណប្រើប្រាស់ទឹក និងអគ្គិសនីសម្រាប់រយៈពេលនេះ ហើយ RentLedger នឹងគណនាថ្លៃដោយស្វ័យប្រវត្តិ ដោយបន្ថែមជាធាតុនីមួយៗរួមជាមួយថ្លៃឈ្នួល វិហ្វាយ ឬថ្លៃផ្សេងទៀតដែលអ្នកបញ្ចូល។",
+  invoiceTutorialStep3Title: "ការចេញ និងនាំចេញវិក្កយបត្រ",
+  invoiceTutorialStep3Body:
+    "នាំចេញវិក្កយបត្រដែលបានបញ្ចប់ជា PDF ឬរូបភាព PNG ចែករំលែកវាដោយផ្ទាល់ទៅ WhatsApp តេឡេក្រាម ឬឡាញ់ ហើយរក្សាទុកក្នុងប្រវត្តិដើម្បីតាមដានស្ថានភាពទូទាត់ពីទំព័រការទូទាត់។",
+  paymentsTutorialStep1Title: "ការតាមដានការទូទាត់",
+  paymentsTutorialStep1Body:
+    "វិក្កយបត្រទាំងអស់ដែលអ្នកបានចេញបង្ហាញនៅទីនេះ។ ត្រងតាមមិនទាន់បង់ ហួសកំណត់ ឬបានបង់ ហើយសម្គាល់វិក្កយបត្រថាបានបង់ភ្លាមៗនៅពេលអ្នកជួលទូទាត់ថ្លៃឈ្នួល — ឬត្រឡប់ទៅមិនទាន់បង់វិញប្រសិនបើអ្នកត្រូវកែតម្រូវ។",
+  paymentsTutorialStep2Title: "កំណត់ត្រាឧបករណ៍វាស់",
+  paymentsTutorialStep2Body:
+    "កំពុងស្វែងរកប្រវត្តិទឹក និងអគ្គិសនីរបស់បន្ទប់ណាមួយ? បើកបន្ទប់នោះពីផ្ទាំងគ្រប់គ្រង — កំណត់ត្រាការអានឧបករណ៍វាស់ស្ថិតនៅក្នុងប្រអប់បន្ទប់ ដោយបង្ហាញរាល់ការអានតាមពេលវេលា។",
+  paymentsTutorialStep3Title: "រក្សាទិន្នន័យឱ្យទាន់សម័យ",
+  paymentsTutorialStep3Body:
+    "ភ្លាមៗពេលអ្នកសម្គាល់វិក្កយបត្រថាបានបង់នៅទីនេះ វានឹងបង្ហាញនៅក្នុងចំនួនថ្លៃឈ្នួលប្រមូលបាន និងថ្លៃឈ្នួលហួសកំណត់នៅផ្ទាំងគ្រប់គ្រងភ្លាមៗ — មិនចាំបាច់មានជំហានផ្សះផ្សាដាច់ដោយឡែកទេ។",
+
+  // More sheet setting rows
+  simpleModeSettingDesc: "សម្រួលផ្ទាំងគ្រប់គ្រងឱ្យនៅសល់តែអ្វីដែលត្រូវការការយកចិត្តទុកដាក់",
+  themeSettingTitle: "រូបរាង",
+  themeSettingDesc: "ប្តូររវាងរបៀបភ្លឺ និងងងឹត",
+  languageSettingTitle: "ភាសា",
+  languageSettingDesc: "អង់គ្លេស ឬខ្មែរ",
+  helpSettingTitle: "ជំនួយ និងការណែនាំ",
+  helpSettingDesc: "មើលការណែនាំសម្រាប់ទំព័រនេះឡើងវិញបានគ្រប់ពេល",
 
   // Needs Attention quick action view
   needsAttentionTab: "ត្រូវការការយកចិត្តទុកដាក់",

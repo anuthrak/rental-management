@@ -1,7 +1,6 @@
 import { getSession } from "@/lib/auth/session"
 import { getDashboardMetrics, getRooms, getUserCurrencyPreference } from "@/lib/db/queries"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
-import { DashboardTour } from "@/components/dashboard/dashboard-tour"
 import { KpiCards } from "@/components/dashboard/kpi-cards"
 import { RoomGrid } from "@/components/dashboard/room-grid"
 
@@ -25,8 +24,6 @@ export default async function DashboardPage() {
         <KpiCards metrics={metrics} />
         <RoomGrid rooms={rooms} currency={currency} />
       </div>
-
-      <DashboardTour />
     </main>
   )
 }

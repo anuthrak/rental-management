@@ -28,6 +28,7 @@ export function Dashboard() {
         icon={Receipt}
         title={t("appName")}
         tagline={t("appTagline")}
+        tutorialPageId="invoice"
         links={[{ href: "/", icon: Building2, label: t("navDashboard") }]}
       />
 

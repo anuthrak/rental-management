@@ -11,8 +11,8 @@ export async function GlobalStatusBar() {
 
   if (demoMode) {
     return (
-      <div className="sticky top-0 z-50 flex shrink-0 items-center justify-between gap-2 overflow-hidden bg-primary px-3 py-1.5 text-sm text-primary-foreground sm:justify-center sm:gap-3 sm:px-4 sm:py-2">
-        <span className="min-w-0 truncate text-xs sm:text-sm">
+      <div className="flex shrink-0 items-center justify-center gap-3 overflow-hidden bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground">
+        <span className="min-w-0 truncate">
           <span className="sm:hidden">Viewing Demo Data</span>
           <span className="hidden sm:inline">
             Viewing Demo Data — sign up to keep your own rooms, tenants, and invoices.
@@ -38,7 +38,7 @@ export async function GlobalStatusBar() {
   if (!user) return null
 
   return (
-    <div className="sticky top-0 z-50 flex shrink-0 items-center justify-between gap-2 overflow-hidden border-b border-border bg-muted/40 px-3 py-1.5 text-sm sm:gap-3 sm:px-4 sm:py-2">
+    <div className="flex shrink-0 items-center justify-center gap-3 overflow-hidden border-b border-border bg-muted/40 px-3 py-2 text-center text-sm font-medium">
       <span className="min-w-0 truncate text-muted-foreground">
         {user.businessName ? (
           <>

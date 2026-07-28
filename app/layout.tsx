@@ -7,6 +7,7 @@ import { I18nProvider } from '@/components/i18n-provider'
 import { GlobalStatusBar } from '@/components/global-status-bar'
 import { SimpleModeEffect } from '@/components/simple-mode-effect'
 import { MobileNav } from '@/components/mobile-nav'
+import { TutorialSheet } from '@/components/tutorial-sheet'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
@@ -60,6 +61,7 @@ export default async function RootLayout({
             <GlobalStatusBar />
             <div className="flex flex-1 flex-col pb-mobile-nav">{children}</div>
             <MobileNav />
+            <TutorialSheet />
             <Toaster richColors position="top-center" />
           </I18nProvider>
         </ThemeProvider>

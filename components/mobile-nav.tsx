@@ -7,29 +7,30 @@ import { Building2, MoreHorizontal, Receipt, Wallet } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { useI18n } from "@/components/i18n-provider"
-import { LanguageToggle } from "@/components/language-toggle"
-import { SimpleModeToggle } from "@/components/simple-mode-toggle"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { TutorialButton } from "@/components/dashboard/tutorial-button"
+import { MoreSheetContent } from "@/components/dashboard/more-sheet"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import type { TutorialPageId } from "@/store/use-tutorial-store"
+
+const PATH_TO_PAGE_ID: Record<string, TutorialPageId> = {
+  "/": "dashboard",
+  "/invoice": "invoice",
+  "/payments": "payments",
+}
 
 function NavTab({
   href,
   icon: Icon,
   label,
   active,
-  dataTour,
 }: {
   href: string
   icon: React.ComponentType<{ className?: string }>
   label: string
   active: boolean
-  dataTour?: string
 }) {
   return (
     <Link
       href={href}
-      data-tour={dataTour}
       className={cn(
         "flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[11px] font-medium transition-transform active:scale-95",
         active ? "text-primary" : "text-muted-foreground",
@@ -62,20 +63,8 @@ export function MobileNav() {
         }}
       >
         <NavTab href="/" icon={Building2} label={t("navDashboard")} active={pathname === "/"} />
-        <NavTab
-          href="/payments"
-          icon={Wallet}
-          label={t("navPayments")}
-          active={pathname === "/payments"}
-          dataTour="payment-tracking"
-        />
-        <NavTab
-          href="/invoice"
-          icon={Receipt}
-          label={t("navInvoiceShort")}
-          active={pathname === "/invoice"}
-          dataTour="invoice-handoff"
-        />
+        <NavTab href="/payments" icon={Wallet} label={t("navPayments")} active={pathname === "/payments"} />
+        <NavTab href="/invoice" icon={Receipt} label={t("navInvoiceShort")} active={pathname === "/invoice"} />
         <button
           type="button"
           onClick={() => setMoreOpen(true)}
@@ -91,12 +80,7 @@ export function MobileNav() {
           <SheetHeader>
             <SheetTitle>{t("moreSheetTitle")}</SheetTitle>
           </SheetHeader>
-          <div className="flex flex-col gap-3 px-4 pb-6">
-            <SimpleModeToggle />
-            <LanguageToggle />
-            <ThemeToggle />
-            <TutorialButton />
-          </div>
+          <MoreSheetContent pageId={PATH_TO_PAGE_ID[pathname] ?? null} onClose={() => setMoreOpen(false)} />
         </SheetContent>
       </Sheet>
     </>

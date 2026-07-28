@@ -91,7 +91,7 @@ export function RoomGrid({ rooms, currency }: { rooms: DashboardRoom[]; currency
             </div>
           )}
 
-          <div data-tour="room-grid" className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
             {filtered.map((room) => (
               <RoomCard key={room.id} room={room} onClick={() => setSelectedRoomId(room.id)} />
             ))}

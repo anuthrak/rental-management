@@ -12,9 +12,10 @@ export function DashboardHeader() {
       icon={Building2}
       title={t("dashboardTitle")}
       tagline={t("dashboardTagline")}
+      tutorialPageId="dashboard"
       links={[
-        { href: "/payments", icon: Wallet, label: t("navPayments"), dataTour: "payment-tracking" },
-        { href: "/invoice", icon: Receipt, label: t("navInvoiceGenerator"), dataTour: "invoice-handoff" },
+        { href: "/payments", icon: Wallet, label: t("navPayments") },
+        { href: "/invoice", icon: Receipt, label: t("navInvoiceGenerator") },
       ]}
     />
   )

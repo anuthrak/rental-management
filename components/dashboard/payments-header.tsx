@@ -12,6 +12,7 @@ export function PaymentsHeader() {
       icon={Wallet}
       title={t("paymentsTitle")}
       tagline={t("paymentsTagline")}
+      tutorialPageId="payments"
       links={[{ href: "/", icon: ArrowLeft, label: t("navDashboard") }]}
     />
   )

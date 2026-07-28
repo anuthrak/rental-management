@@ -1,36 +1,23 @@
 "use client"
 
 import { HelpCircle } from "lucide-react"
-import { usePathname, useRouter } from "next/navigation"
 
-import { useTourStore } from "@/store/use-tour-store"
+import { useI18n } from "@/components/i18n-provider"
+import { useTutorialStore, type TutorialPageId } from "@/store/use-tutorial-store"
 import { Button } from "@/components/ui/button"
 
-export function TutorialButton() {
-  const router = useRouter()
-  const pathname = usePathname()
-  const openTour = useTourStore((s) => s.open)
-
-  function handleClick() {
-    // The tour's highlighted elements only exist on the dashboard (now the
-    // root route), so from any other page (Payments, Invoice Generator)
-    // navigate there first and let DashboardTour pick up the ?tour=1 flag
-    // to auto-launch.
-    if (pathname === "/") {
-      openTour()
-    } else {
-      router.push("/?tour=1")
-    }
-  }
+export function TutorialButton({ pageId }: { pageId: TutorialPageId }) {
+  const { t } = useI18n()
+  const open = useTutorialStore((s) => s.open)
 
   return (
     <Button
       type="button"
       variant="ghost"
       size="icon"
-      aria-label="Tutorial / Help"
-      title="Tutorial / Help"
-      onClick={handleClick}
+      aria-label={t("tutorialButtonLabel")}
+      title={t("tutorialButtonLabel")}
+      onClick={() => open(pageId)}
       className="min-h-11 min-w-11"
     >
       <HelpCircle />
