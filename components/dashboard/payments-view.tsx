@@ -130,7 +130,7 @@ export function PaymentsView({ invoices }: { invoices: DashboardInvoice[] }) {
             return (
               <div
                 key={invoice.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3 text-sm"
+                className="flex flex-col gap-3 rounded-lg border border-border p-4 text-sm transition-transform active:scale-[0.99] sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex flex-col gap-0.5">
                   <span className="font-medium">
@@ -140,31 +140,35 @@ export function PaymentsView({ invoices }: { invoices: DashboardInvoice[] }) {
                     Due {formatDateDMY(invoice.dueDate)}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium tabular-nums">
-                    {formatCurrency(invoice.amountDue, "USD")}
-                  </span>
-                  <Badge variant={statusVariant(invoice)}>{statusLabel(invoice)}</Badge>
-                  {!isPaid && (
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                  <div className="flex items-center justify-between gap-2 sm:justify-start">
+                    <span className="font-medium tabular-nums">
+                      {formatCurrency(invoice.amountDue, "USD")}
+                    </span>
+                    <Badge variant={statusVariant(invoice)}>{statusLabel(invoice)}</Badge>
+                  </div>
+                  <div className="flex gap-2">
+                    {!isPaid && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="min-h-11 flex-1 sm:flex-none"
+                        onClick={() => handleShare(invoice)}
+                      >
+                        <Share2 data-icon="inline-start" />
+                        {t("shareInvoiceAction")}
+                      </Button>
+                    )}
                     <Button
                       size="sm"
-                      variant="outline"
-                      className="min-h-11"
-                      onClick={() => handleShare(invoice)}
+                      variant={isPaid ? "outline" : "default"}
+                      className="min-h-11 flex-1 sm:flex-none"
+                      disabled={isPending && pendingId === invoice.id}
+                      onClick={() => handleToggleStatus(invoice.id, isPaid)}
                     >
-                      <Share2 data-icon="inline-start" />
-                      {t("shareInvoiceAction")}
+                      {isPaid ? t("markUnpaidAction") : t("recordPaymentAction")}
                     </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    variant={isPaid ? "outline" : "default"}
-                    className="min-h-11"
-                    disabled={isPending && pendingId === invoice.id}
-                    onClick={() => handleToggleStatus(invoice.id, isPaid)}
-                  >
-                    {isPaid ? t("markUnpaidAction") : t("recordPaymentAction")}
-                  </Button>
+                  </div>
                 </div>
               </div>
             )

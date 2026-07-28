@@ -1,16 +1,12 @@
 "use client"
 
 import { useRef, useState } from "react"
-import Link from "next/link"
 import { ArrowLeft, Building2, Receipt } from "lucide-react"
 
 import { useI18n } from "@/components/i18n-provider"
 import { useInvoiceStore } from "@/store/use-invoice-store"
 import { useSimpleModeStore } from "@/store/use-simple-mode-store"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { LanguageToggle } from "@/components/language-toggle"
-import { SimpleModeToggle } from "@/components/simple-mode-toggle"
-import { TutorialButton } from "@/components/dashboard/tutorial-button"
+import { PageHeader } from "@/components/page-header"
 import { InvoiceForm } from "@/components/invoice/invoice-form"
 import { InvoicePreview } from "@/components/invoice/invoice-preview"
 import { InvoiceHistory } from "@/components/invoice/invoice-history"
@@ -28,35 +24,12 @@ export function Dashboard() {
 
   return (
     <main className="mx-auto min-h-svh w-full max-w-7xl px-4 py-6 sm:px-6 lg:py-10">
-      {/* Top bar */}
-      <header className="mb-6 flex flex-wrap items-center justify-between gap-4 lg:mb-8">
-        <div className="flex items-center gap-3">
-          <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Receipt className="size-5" />
-          </span>
-          <div className="flex flex-col leading-tight">
-            <span className="font-heading text-lg font-semibold">
-              {t("appName")}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {t("appTagline")}
-            </span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/"
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-foreground/70 hover:bg-muted hover:text-foreground"
-          >
-            <Building2 className="size-4" />
-            {t("navDashboard")}
-          </Link>
-          <SimpleModeToggle />
-          <LanguageToggle />
-          <ThemeToggle />
-          <TutorialButton />
-        </div>
-      </header>
+      <PageHeader
+        icon={Receipt}
+        title={t("appName")}
+        tagline={t("appTagline")}
+        links={[{ href: "/", icon: Building2, label: t("navDashboard") }]}
+      />
 
       {!hasHydrated ? (
         <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">

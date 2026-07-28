@@ -27,8 +27,21 @@ const STEPS = [
 
 type Rect = { top: number; left: number; width: number; height: number }
 
+// Some anchors (e.g. Invoice/Payments nav) now exist twice — once in the
+// desktop header, once in the mobile bottom nav — with only one visible at
+// a time via CSS. Pick the first match that actually has a size instead of
+// just the first match in DOM order, which could be the hidden copy.
+function findVisible(selector: string): Element | null {
+  const matches = document.querySelectorAll(selector)
+  for (const el of matches) {
+    const r = el.getBoundingClientRect()
+    if (r.width > 0 && r.height > 0) return el
+  }
+  return matches[0] ?? null
+}
+
 function measure(selector: string): Rect | null {
-  const el = document.querySelector(selector)
+  const el = findVisible(selector)
   if (!el) return null
   const r = el.getBoundingClientRect()
   return { top: r.top, left: r.left, width: r.width, height: r.height }
@@ -73,7 +86,7 @@ export function DashboardTour() {
       setRect(measure(STEPS[step].selector))
     }
 
-    const target = document.querySelector(STEPS[step].selector)
+    const target = findVisible(STEPS[step].selector)
     target?.scrollIntoView({ behavior: "smooth", block: "center" })
     // Let the scroll settle before measuring so the highlight lands correctly.
     const timeout = window.setTimeout(reposition, 300)

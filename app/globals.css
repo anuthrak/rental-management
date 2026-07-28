@@ -81,6 +81,7 @@
   --sidebar-accent-foreground: oklch(0.35 0.06 162);
   --sidebar-border: oklch(0.9 0.01 90);
   --sidebar-ring: oklch(0.5 0.11 162);
+  --bottom-nav-height: 4rem;
 }
 
 .dark {
@@ -122,8 +123,25 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html,
+  body {
+    @apply overflow-x-hidden;
+  }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Fixed bottom mobile nav (components/mobile-nav.tsx) sits below `sm` and
+   reserves --bottom-nav-height plus the device's safe-area inset; content
+   below it needs matching bottom padding so the nav never covers it. */
+.pb-mobile-nav {
+  padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 40rem) {
+  .pb-mobile-nav {
+    padding-bottom: 0;
   }
 }
 

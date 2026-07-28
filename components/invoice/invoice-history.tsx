@@ -68,7 +68,7 @@ export function InvoiceHistory({
           return (
             <div
               key={inv.id}
-              className="flex items-center gap-3 rounded-lg border border-border p-3"
+              className="flex flex-col gap-3 rounded-lg border border-border p-4 transition-transform active:scale-[0.99] sm:flex-row sm:items-center"
             >
               <div className="flex min-w-0 flex-1 flex-col">
                 <div className="flex items-center gap-2">
@@ -84,25 +84,29 @@ export function InvoiceHistory({
                   {formatCurrency(total, inv.currency, locale)}
                 </span>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  loadInvoice(inv.id)
-                  onLoad?.()
-                  toast.success(`${inv.invoiceNumber} ${t("loadInvoice").toLowerCase()}`)
-                }}
-              >
-                {t("loadInvoice")}
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={`Delete ${inv.invoiceNumber}`}
-                onClick={() => deleteInvoice(inv.id)}
-              >
-                <Trash2 className="text-destructive" />
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="min-h-11 flex-1 sm:flex-none"
+                  onClick={() => {
+                    loadInvoice(inv.id)
+                    onLoad?.()
+                    toast.success(`${inv.invoiceNumber} ${t("loadInvoice").toLowerCase()}`)
+                  }}
+                >
+                  {t("loadInvoice")}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="min-h-11 min-w-11"
+                  aria-label={`Delete ${inv.invoiceNumber}`}
+                  onClick={() => deleteInvoice(inv.id)}
+                >
+                  <Trash2 className="text-destructive" />
+                </Button>
+              </div>
             </div>
           )
         })}

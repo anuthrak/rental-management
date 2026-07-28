@@ -127,7 +127,7 @@ export function LineItemTable() {
               onDrop={() => handleDrop(index)}
               onDragEnd={() => setDraggingIndex(null)}
               className={cn(
-                "flex items-start gap-1.5 rounded-lg border border-border p-3 md:items-center md:rounded-none md:border-0 md:p-0",
+                "flex items-start gap-1.5 rounded-lg border border-border p-4 md:items-center md:rounded-none md:border-0 md:p-0",
                 draggingIndex === index && "opacity-40",
               )}
             >
@@ -251,6 +251,7 @@ export function LineItemTable() {
                   type="button"
                   variant="ghost"
                   size="icon"
+                  className="min-h-11 min-w-11"
                   aria-label={`Remove ${item.label || "line item"}`}
                   onClick={() => removeLineItem(item.id)}
                 >

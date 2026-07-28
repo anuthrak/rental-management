@@ -8,6 +8,7 @@ import { toast } from "sonner"
 import type { DashboardRoom } from "@/lib/db/queries"
 import { formatCurrency } from "@/lib/currency"
 import { formatDateDMY } from "@/lib/date"
+import { useMediaQuery } from "@/lib/use-media-query"
 import { useI18n } from "@/components/i18n-provider"
 import { useInvoiceStore, newLineItem } from "@/store/use-invoice-store"
 import {
@@ -59,6 +60,7 @@ export function RoomDrawer({
   const router = useRouter()
   const { t } = useI18n()
   const [isPending, startTransition] = useTransition()
+  const isDesktop = useMediaQuery("(min-width: 640px)")
 
   const [cachedRoom, setCachedRoom] = useState(room)
   const [editingPrice, setEditingPrice] = useState(false)
@@ -163,7 +165,10 @@ export function RoomDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="data-[side=right]:w-full sm:data-[side=right]:w-3/4">
+      <SheetContent
+        side={isDesktop ? "right" : "bottom"}
+        className="data-[side=right]:w-full sm:data-[side=right]:w-3/4"
+      >
         <SheetHeader className="border-b">
           <div className="flex items-center justify-between gap-2 pr-8">
             <SheetTitle>{activeRoom.roomNumber}</SheetTitle>

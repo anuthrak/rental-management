@@ -36,7 +36,11 @@ export function RoomCard({
   }
 
   return (
-    <button type="button" onClick={onClick} className="text-left">
+    <button
+      type="button"
+      onClick={onClick}
+      className="text-left transition-transform active:scale-[0.98]"
+    >
       <Card className="transition-shadow hover:shadow-md">
         <CardContent className="flex flex-col gap-3">
           <div className="flex items-start justify-between gap-2">

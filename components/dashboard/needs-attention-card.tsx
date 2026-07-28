@@ -68,7 +68,7 @@ export function NeedsAttentionCard({
         if (e.key === "Enter" || e.key === " ") onOpen()
       }}
       className={cn(
-        "cursor-pointer border-l-4 transition-shadow hover:shadow-md",
+        "cursor-pointer border-l-4 transition-all hover:shadow-md active:scale-[0.98]",
         invoice.isOverdue ? "border-l-destructive" : "border-l-amber-500",
       )}
     >
