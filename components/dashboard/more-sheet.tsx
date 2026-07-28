@@ -83,7 +83,7 @@ export function MoreSheetContent({
   const isDark = mounted && resolvedTheme === "dark"
 
   return (
-    <div className="flex flex-col gap-3 px-4 pb-6">
+    <div className="flex flex-col gap-3 px-4 pb-12">
       <SettingRow
         icon={Sparkles}
         title={t("simpleModeLabel")}

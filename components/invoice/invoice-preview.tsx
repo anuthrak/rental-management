@@ -2,7 +2,7 @@
 
 import { useMemo } from "react"
 
-import { computeTotals, electricCost, usdToKhr, waterCost, withAmounts } from "@/lib/calc"
+import { computeTotals, usdToKhr, withAmounts } from "@/lib/calc"
 import { formatCurrency, formatKHR, formatNumber } from "@/lib/currency"
 import { formatDateDMY } from "@/lib/date"
 import { useI18n } from "@/components/i18n-provider"
@@ -20,12 +20,6 @@ export function InvoicePreview({
     () => computeTotals(draft.lineItems),
     [draft.lineItems],
   )
-
-  function displayUtilityAmount(amountUsd: number): string {
-    return draft.currency === "KHR"
-      ? formatCurrency(usdToKhr(amountUsd), "KHR", locale)
-      : formatCurrency(amountUsd, "USD", locale)
-  }
 
   return (
     <div
@@ -75,19 +69,11 @@ export function InvoicePreview({
             {t("periodLabel")}
           </span>
           <span className="text-sm">
-            {formatDateDMY(draft.startDate)}
+            {t("dateInField")}: {formatDateDMY(draft.dateIn)}
           </span>
           <span className="text-sm text-muted-foreground">
-            {formatDateDMY(draft.endDate)}
+            {t("dateOutField")}: {formatDateDMY(draft.dateOut)}
           </span>
-          <div className="mt-1.5 flex flex-col gap-0.5">
-            <span className="text-xs text-muted-foreground">
-              {t("issuedLabel")}: {formatDateDMY(draft.issueDate)}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {t("dueLabel")}: {formatDateDMY(draft.dueDate)}
-            </span>
-          </div>
         </div>
       </div>
 
@@ -103,45 +89,40 @@ export function InvoicePreview({
               {t("noLineItems")}
             </p>
           )}
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 border-b border-border/60 py-2.5"
-            >
-              <div className="flex flex-col">
-                <span className="font-medium">{item.label || "—"}</span>
-                <span className="text-xs text-muted-foreground tabular-nums">
-                  {formatNumber(item.quantity, locale)} {item.unit} ×{" "}
-                  {formatCurrency(item.rate, draft.currency, locale)}
+          {items.map((item) => {
+            const isUtilityItem = item.unit === "m³" || item.unit === "kW"
+            const hasMeterData = item.previousMeter !== undefined && item.recentMeter !== undefined
+            const utilityLabel = item.unit === "m³" ? t("waterCostNote") : t("electricCostNote")
+            // The Unit enum stores electricity as "kW" everywhere else in
+            // the app, but the requested formula wording is "kWh".
+            const formulaUnit = item.unit === "kW" ? "kWh" : item.unit
+            return (
+              <div
+                key={item.id}
+                className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 border-b border-border/60 py-2.5"
+              >
+                <div className="flex flex-col">
+                  <span className="font-medium">{item.label || "—"}</span>
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {formatNumber(item.quantity, locale)} {item.unit} ×{" "}
+                    {formatCurrency(item.rate, draft.currency, locale)}
+                  </span>
+                  {isUtilityItem && hasMeterData && (
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                      {utilityLabel}: ({formatNumber(item.recentMeter!, locale)} −{" "}
+                      {formatNumber(item.previousMeter!, locale)}) {formulaUnit} ×{" "}
+                      {formatCurrency(item.rate, draft.currency, locale)}/{formulaUnit} ={" "}
+                      {formatCurrency(item.amount, draft.currency, locale)}
+                    </span>
+                  )}
+                </div>
+                <span className="text-right font-medium tabular-nums">
+                  {formatCurrency(item.amount, draft.currency, locale)}
                 </span>
               </div>
-              <span className="text-right font-medium tabular-nums">
-                {formatCurrency(item.amount, draft.currency, locale)}
-              </span>
-            </div>
-          ))}
+            )
+          })}
         </div>
-
-        {/* Utility usage — reference only, never added to the total */}
-        {(draft.waterUsageM3 > 0 || draft.electricUsageKWh > 0) && (
-          <div className="mt-3 rounded-lg border border-dashed border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-            <p className="mb-1 font-medium text-foreground">{t("utilityNoteTitle")}</p>
-            {draft.waterUsageM3 > 0 && (
-              <p>
-                {t("waterCostNote")}: {formatNumber(draft.waterUsageM3, locale)} m³ ×{" "}
-                {displayUtilityAmount(draft.waterRateUsd)} ={" "}
-                {displayUtilityAmount(waterCost(draft.waterUsageM3, draft.waterRateUsd))}
-              </p>
-            )}
-            {draft.electricUsageKWh > 0 && (
-              <p>
-                {t("electricCostNote")}: {formatNumber(draft.electricUsageKWh, locale)} kWh ×{" "}
-                {displayUtilityAmount(draft.electricRateUsd)} ={" "}
-                {displayUtilityAmount(electricCost(draft.electricUsageKWh, draft.electricRateUsd))}
-              </p>
-            )}
-          </div>
-        )}
 
         {/* Totals */}
         <div className="mt-4 flex flex-col gap-2">

@@ -22,13 +22,15 @@ function KpiCard({
 }) {
   return (
     <Card>
-      <CardContent className="flex items-start justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-muted-foreground">{label}</span>
-          <span className="font-heading text-2xl font-semibold tabular-nums">{value}</span>
-          {sub && <span className="text-xs text-muted-foreground">{sub}</span>}
+      <CardContent className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="truncate text-xs font-medium text-muted-foreground">{label}</span>
+          <span className="truncate font-heading text-xl font-semibold tabular-nums sm:text-2xl">
+            {value}
+          </span>
+          {sub && <span className="truncate text-xs text-muted-foreground">{sub}</span>}
         </div>
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground sm:size-9">
           <Icon className="size-4" />
         </span>
       </CardContent>
@@ -73,7 +75,7 @@ export function KpiCards({ metrics }: { metrics: DashboardMetrics }) {
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
       <KpiCard
         icon={DoorOpen}
         label={t("kpiOccupancy")}

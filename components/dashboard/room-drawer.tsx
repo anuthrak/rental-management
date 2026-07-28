@@ -6,6 +6,7 @@ import { Pencil, Receipt } from "lucide-react"
 import { toast } from "sonner"
 
 import type { DashboardRoom } from "@/lib/db/queries"
+import { ELECTRIC_RATE_USD, WATER_RATE_USD } from "@/lib/calc"
 import { formatCurrency } from "@/lib/currency"
 import { formatDateDMY } from "@/lib/date"
 import { useMediaQuery } from "@/lib/use-media-query"
@@ -150,6 +151,9 @@ export function RoomDrawer({
         dueDate: invoiceDueDate,
       })
 
+      const latestReading = activeRoom!.meterReadings[0] ?? null
+      const lastWater = latestReading?.waterMeterValue ?? 0
+      const lastElectric = latestReading?.electricMeterValue ?? 0
       const store = useInvoiceStore.getState()
       store.resetDraft()
       store.updateDraft({
@@ -157,6 +161,22 @@ export function RoomDrawer({
         guestName: activeRoom!.tenant!.fullName,
         lineItems: [
           newLineItem({ label: "Monthly Rent", quantity: 1, unit: "month", rate: amount }),
+          newLineItem({
+            label: "Electricity",
+            quantity: 0,
+            unit: "kW",
+            rate: ELECTRIC_RATE_USD,
+            previousMeter: lastElectric,
+            recentMeter: lastElectric,
+          }),
+          newLineItem({
+            label: "Water",
+            quantity: 0,
+            unit: "m³",
+            rate: WATER_RATE_USD,
+            previousMeter: lastWater,
+            recentMeter: lastWater,
+          }),
         ],
       })
       router.push("/invoice")

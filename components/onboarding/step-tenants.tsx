@@ -32,15 +32,41 @@ const DEPOSIT_STATUS_KEYS: Record<SecurityDepositStatus, TranslationKey> = {
   APPLIED_TO_RENT: "depositStatusAppliedToRent",
 }
 
+function RequiredMark() {
+  return (
+    <span className="text-destructive" aria-hidden>
+      {" "}
+      *
+    </span>
+  )
+}
+
 export function StepTenants() {
   const { t } = useI18n()
   const pricingModel = useOnboardingStore((s) => s.pricingModel)
   const standardRoomCount = useOnboardingStore((s) => s.standardRoomCount)
   const standardBaseRate = useOnboardingStore((s) => s.standardBaseRate)
+  const standardWaterMeterStart = useOnboardingStore((s) => s.standardWaterMeterStart)
+  const standardElectricMeterStart = useOnboardingStore((s) => s.standardElectricMeterStart)
   const customRooms = useOnboardingStore((s) => s.customRooms)
   const rooms = useMemo(
-    () => resolveRooms({ pricingModel, standardRoomCount, standardBaseRate, customRooms }),
-    [pricingModel, standardRoomCount, standardBaseRate, customRooms],
+    () =>
+      resolveRooms({
+        pricingModel,
+        standardRoomCount,
+        standardBaseRate,
+        standardWaterMeterStart,
+        standardElectricMeterStart,
+        customRooms,
+      }),
+    [
+      pricingModel,
+      standardRoomCount,
+      standardBaseRate,
+      standardWaterMeterStart,
+      standardElectricMeterStart,
+      customRooms,
+    ],
   )
   const tenants = useOnboardingStore((s) => s.tenants)
   const addTenant = useOnboardingStore((s) => s.addTenant)
@@ -55,9 +81,20 @@ export function StepTenants() {
     setDraft((d) => ({ ...d, ...patch }))
   }
 
+  function canSubmit(): boolean {
+    return Boolean(
+      draft.roomId &&
+        draft.fullName.trim() &&
+        draft.nationalId.trim() &&
+        draft.leaseStartDate &&
+        draft.leaseEndDate &&
+        draft.agreedRent > 0,
+    )
+  }
+
   function handleAdd(e: React.FormEvent) {
     e.preventDefault()
-    if (!draft.roomId || !draft.fullName.trim() || !draft.agreedRent) return
+    if (!canSubmit()) return
     addTenant(draft)
     setDraft(createTenantDraft(""))
   }
@@ -115,7 +152,10 @@ export function StepTenants() {
           <h3 className="font-heading text-sm font-medium">{t("addTenantTitle")}</h3>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="tenant-room">{t("roomLabel")}</Label>
+              <Label htmlFor="tenant-room">
+                {t("roomLabel")}
+                <RequiredMark />
+              </Label>
               <Select
                 value={draft.roomId}
                 onValueChange={(value) => {
@@ -143,7 +183,10 @@ export function StepTenants() {
               </Select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="tenant-name">{t("fullNameField")}</Label>
+              <Label htmlFor="tenant-name">
+                {t("fullNameField")}
+                <RequiredMark />
+              </Label>
               <Input
                 id="tenant-name"
                 className="h-11 w-full"
@@ -173,7 +216,10 @@ export function StepTenants() {
               />
             </div>
             <div className="flex flex-col gap-1.5 sm:col-span-2">
-              <Label htmlFor="tenant-id">{t("nationalIdPassportField")}</Label>
+              <Label htmlFor="tenant-id">
+                {t("nationalIdPassportField")}
+                <RequiredMark />
+              </Label>
               <Input
                 id="tenant-id"
                 className="h-11 w-full"
@@ -187,7 +233,10 @@ export function StepTenants() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="lease-start">{t("leaseStartField")}</Label>
+              <Label htmlFor="lease-start">
+                {t("dateInField")}
+                <RequiredMark />
+              </Label>
               <Input
                 id="lease-start"
                 type="date"
@@ -197,7 +246,10 @@ export function StepTenants() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="lease-end">{t("leaseEndOptionalField")}</Label>
+              <Label htmlFor="lease-end">
+                {t("dateOutField")}
+                <RequiredMark />
+              </Label>
               <Input
                 id="lease-end"
                 type="date"
@@ -207,7 +259,10 @@ export function StepTenants() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="agreed-rent">{t("agreedRentDollarField")}</Label>
+              <Label htmlFor="agreed-rent">
+                {t("agreedRentDollarField")}
+                <RequiredMark />
+              </Label>
               <Input
                 id="agreed-rent"
                 type="number"
@@ -258,30 +313,6 @@ export function StepTenants() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="water-start">{t("waterMeterStartField")}</Label>
-                <Input
-                  id="water-start"
-                  type="number"
-                  min={0}
-                  step="any"
-                  className="h-11 w-full"
-                  value={draft.waterMeterStart}
-                  onChange={(e) => patchDraft({ waterMeterStart: Number(e.target.value) })}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="electric-start">{t("electricMeterStartField")}</Label>
-                <Input
-                  id="electric-start"
-                  type="number"
-                  min={0}
-                  step="any"
-                  className="h-11 w-full"
-                  value={draft.electricMeterStart}
-                  onChange={(e) => patchDraft({ electricMeterStart: Number(e.target.value) })}
-                />
-              </div>
             </div>
           </AdvancedSection>
 
@@ -291,7 +322,7 @@ export function StepTenants() {
             <Button
               type="submit"
               className="h-11 w-full sm:w-auto"
-              disabled={!draft.roomId || !draft.fullName.trim()}
+              disabled={!canSubmit()}
             >
               <UserPlus data-icon="inline-start" />
               {t("addTenantAction")}

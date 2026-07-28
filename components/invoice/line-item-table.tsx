@@ -6,7 +6,7 @@ import { GripVertical, Plus, ShieldCheck, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { UNITS, type Unit } from "@/lib/types"
 import { lineAmount, SECURITY_FEE_ID } from "@/lib/calc"
-import { formatCurrency } from "@/lib/currency"
+import { formatCurrency, formatNumber } from "@/lib/currency"
 import { useI18n } from "@/components/i18n-provider"
 import { useInvoiceStore } from "@/store/use-invoice-store"
 import { AdvancedSection } from "@/components/simple-mode/advanced-section"
@@ -127,10 +127,11 @@ export function LineItemTable() {
               onDrop={() => handleDrop(index)}
               onDragEnd={() => setDraggingIndex(null)}
               className={cn(
-                "flex items-start gap-1.5 rounded-lg border border-border p-4 md:items-center md:rounded-none md:border-0 md:p-0",
+                "flex flex-col gap-2 rounded-lg border border-border p-4 md:rounded-none md:border-0 md:p-0",
                 draggingIndex === index && "opacity-40",
               )}
             >
+              <div className="flex items-start gap-1.5 md:items-center">
               <div
                 className="flex h-8 shrink-0 cursor-grab items-center justify-center text-muted-foreground active:cursor-grabbing"
                 aria-label={t("dragToReorder")}
@@ -163,20 +164,30 @@ export function LineItemTable() {
                 >
                   {t("quantity")}
                 </Label>
-                <Input
-                  id={`qty-${item.id}`}
-                  type="number"
-                  min={0}
-                  step="any"
-                  inputMode="decimal"
-                  className="text-right"
-                  value={item.quantity}
-                  onChange={(e) =>
-                    updateLineItem(item.id, {
-                      quantity: e.target.value === "" ? 0 : Number(e.target.value),
-                    })
-                  }
-                />
+                {isUtilityItem ? (
+                  <span
+                    id={`qty-${item.id}`}
+                    className="flex h-8 items-center justify-end px-2.5 text-sm text-muted-foreground tabular-nums"
+                    title="Derived from Previous/Recent Meter below"
+                  >
+                    {formatNumber(item.quantity, locale)}
+                  </span>
+                ) : (
+                  <Input
+                    id={`qty-${item.id}`}
+                    type="number"
+                    min={0}
+                    step="any"
+                    inputMode="decimal"
+                    className="text-right"
+                    value={item.quantity}
+                    onChange={(e) =>
+                      updateLineItem(item.id, {
+                        quantity: e.target.value === "" ? 0 : Number(e.target.value),
+                      })
+                    }
+                  />
+                )}
               </div>
 
               <div>
@@ -211,30 +222,20 @@ export function LineItemTable() {
                 >
                   {t("rate")}
                 </Label>
-                {isUtilityItem ? (
-                  <span
-                    id={`rate-${item.id}`}
-                    className="flex h-8 items-center justify-end px-2.5 text-sm text-muted-foreground tabular-nums"
-                    title="Set in the Utility usage section above"
-                  >
-                    {formatCurrency(item.rate, currency, locale)}
-                  </span>
-                ) : (
-                  <Input
-                    id={`rate-${item.id}`}
-                    type="number"
-                    min={0}
-                    step="any"
-                    inputMode="decimal"
-                    className="text-right"
-                    value={item.rate}
-                    onChange={(e) =>
-                      updateLineItem(item.id, {
-                        rate: e.target.value === "" ? 0 : Number(e.target.value),
-                      })
-                    }
-                  />
-                )}
+                <Input
+                  id={`rate-${item.id}`}
+                  type="number"
+                  min={0}
+                  step="any"
+                  inputMode="decimal"
+                  className="text-right"
+                  value={item.rate}
+                  onChange={(e) =>
+                    updateLineItem(item.id, {
+                      rate: e.target.value === "" ? 0 : Number(e.target.value),
+                    })
+                  }
+                />
               </div>
 
               <div className="flex flex-col md:items-end">
@@ -259,6 +260,54 @@ export function LineItemTable() {
                 </Button>
               </div>
               </div>
+              </div>
+
+              {isUtilityItem && (
+                <div className="grid grid-cols-2 gap-2 md:pl-9">
+                  <div>
+                    <Label
+                      htmlFor={`prev-meter-${item.id}`}
+                      className="mb-1 text-xs text-muted-foreground"
+                    >
+                      {t("previousMeterLabel")}
+                    </Label>
+                    <Input
+                      id={`prev-meter-${item.id}`}
+                      type="number"
+                      min={0}
+                      step="any"
+                      inputMode="decimal"
+                      value={item.previousMeter ?? 0}
+                      onChange={(e) =>
+                        updateLineItem(item.id, {
+                          previousMeter: e.target.value === "" ? 0 : Number(e.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label
+                      htmlFor={`recent-meter-${item.id}`}
+                      className="mb-1 text-xs text-muted-foreground"
+                    >
+                      {t("recentMeterLabel")}
+                    </Label>
+                    <Input
+                      id={`recent-meter-${item.id}`}
+                      type="number"
+                      min={0}
+                      step="any"
+                      inputMode="decimal"
+                      value={item.recentMeter ?? 0}
+                      onChange={(e) =>
+                        updateLineItem(item.id, {
+                          recentMeter: e.target.value === "" ? 0 : Number(e.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )
         })}

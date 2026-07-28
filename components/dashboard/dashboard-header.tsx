@@ -5,7 +5,7 @@ import { Building2, Receipt, Wallet } from "lucide-react"
 import { useI18n } from "@/components/i18n-provider"
 import { PageHeader } from "@/components/page-header"
 
-export function DashboardHeader() {
+export function DashboardHeader({ banner }: { banner?: React.ReactNode }) {
   const { t } = useI18n()
   return (
     <PageHeader
@@ -13,6 +13,7 @@ export function DashboardHeader() {
       title={t("dashboardTitle")}
       tagline={t("dashboardTagline")}
       tutorialPageId="dashboard"
+      banner={banner}
       links={[
         { href: "/payments", icon: Wallet, label: t("navPayments") },
         { href: "/invoice", icon: Receipt, label: t("navInvoiceGenerator") },

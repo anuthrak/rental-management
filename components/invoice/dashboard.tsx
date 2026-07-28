@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 
-export function Dashboard() {
+export function Dashboard({ banner }: { banner?: React.ReactNode }) {
   const { t } = useI18n()
   const simpleMode = useSimpleModeStore((s) => s.simpleMode)
   const hasHydrated = useInvoiceStore((s) => s.hasHydrated)
@@ -23,14 +23,16 @@ export function Dashboard() {
   const [tab, setTab] = useState("preview")
 
   return (
-    <main className="mx-auto min-h-svh w-full max-w-7xl px-4 py-6 sm:px-6 lg:py-10">
+    <>
       <PageHeader
         icon={Receipt}
         title={t("appName")}
         tagline={t("appTagline")}
         tutorialPageId="invoice"
+        banner={banner}
         links={[{ href: "/", icon: Building2, label: t("navDashboard") }]}
       />
+      <main className="mx-auto min-h-svh w-full max-w-7xl px-4 py-6 sm:px-6 lg:py-10">
 
       {!hasHydrated ? (
         <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
@@ -128,6 +130,7 @@ export function Dashboard() {
           </div>
         </div>
       )}
-    </main>
+      </main>
+    </>
   )
 }

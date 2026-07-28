@@ -10,6 +10,8 @@ export type OnboardingRoom = {
   id: string
   roomNumber: string
   targetPrice: number
+  waterMeterStart: number
+  electricMeterStart: number
 }
 
 export type OnboardingTenant = {
@@ -24,8 +26,6 @@ export type OnboardingTenant = {
   agreedRent: number
   securityDeposit: number
   securityDepositStatus: SecurityDepositStatus
-  waterMeterStart: number
-  electricMeterStart: number
 }
 
 function uid(): string {
@@ -62,8 +62,6 @@ export function createTenantDraft(roomId: string, agreedRent = 0): OnboardingTen
     agreedRent,
     securityDeposit: 0,
     securityDepositStatus: "HELD",
-    waterMeterStart: 0,
-    electricMeterStart: 0,
   }
 }
 
@@ -74,6 +72,8 @@ export function resolveRooms(state: {
   pricingModel: PricingModel
   standardRoomCount: number
   standardBaseRate: number
+  standardWaterMeterStart: number
+  standardElectricMeterStart: number
   customRooms: OnboardingRoom[]
 }): OnboardingRoom[] {
   if (state.pricingModel === "standard") {
@@ -82,6 +82,8 @@ export function resolveRooms(state: {
       id: `standard-${i}`,
       roomNumber: `Room ${101 + i}`,
       targetPrice: state.standardBaseRate,
+      waterMeterStart: state.standardWaterMeterStart,
+      electricMeterStart: state.standardElectricMeterStart,
     }))
   }
   return state.customRooms
@@ -93,6 +95,8 @@ interface OnboardingState {
   pricingModel: PricingModel
   standardRoomCount: number
   standardBaseRate: number
+  standardWaterMeterStart: number
+  standardElectricMeterStart: number
   customRooms: OnboardingRoom[]
   tenants: OnboardingTenant[]
   currency: OnboardingCurrency
@@ -105,6 +109,8 @@ interface OnboardingState {
   setPricingModel: (model: PricingModel) => void
   setStandardRoomCount: (count: number) => void
   setStandardBaseRate: (rate: number) => void
+  setStandardWaterMeterStart: (value: number) => void
+  setStandardElectricMeterStart: (value: number) => void
   addCustomRoom: () => void
   updateCustomRoom: (id: string, patch: Partial<Omit<OnboardingRoom, "id">>) => void
   removeCustomRoom: (id: string) => void
@@ -124,6 +130,8 @@ const initialState = {
   pricingModel: "standard" as PricingModel,
   standardRoomCount: DEFAULT_STANDARD_ROOM_COUNT,
   standardBaseRate: DEFAULT_STANDARD_BASE_RATE,
+  standardWaterMeterStart: 0,
+  standardElectricMeterStart: 0,
   customRooms: [] as OnboardingRoom[],
   tenants: [] as OnboardingTenant[],
   currency: "USD" as OnboardingCurrency,
@@ -156,10 +164,15 @@ export const useOnboardingStore = create<OnboardingState>()((set) => ({
     }),
 
   setStandardBaseRate: (rate) => set({ standardBaseRate: Math.max(0, rate || 0) }),
+  setStandardWaterMeterStart: (value) => set({ standardWaterMeterStart: Math.max(0, value || 0) }),
+  setStandardElectricMeterStart: (value) => set({ standardElectricMeterStart: Math.max(0, value || 0) }),
 
   addCustomRoom: () =>
     set((s) => ({
-      customRooms: [...s.customRooms, { id: uid(), roomNumber: "", targetPrice: 0 }],
+      customRooms: [
+        ...s.customRooms,
+        { id: uid(), roomNumber: "", targetPrice: 0, waterMeterStart: 0, electricMeterStart: 0 },
+      ],
     })),
 
   updateCustomRoom: (id, patch) =>

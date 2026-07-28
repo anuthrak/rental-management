@@ -5,7 +5,7 @@ import { ArrowLeft, Wallet } from "lucide-react"
 import { useI18n } from "@/components/i18n-provider"
 import { PageHeader } from "@/components/page-header"
 
-export function PaymentsHeader() {
+export function PaymentsHeader({ banner }: { banner?: React.ReactNode }) {
   const { t } = useI18n()
   return (
     <PageHeader
@@ -13,6 +13,7 @@ export function PaymentsHeader() {
       title={t("paymentsTitle")}
       tagline={t("paymentsTagline")}
       tutorialPageId="payments"
+      banner={banner}
       links={[{ href: "/", icon: ArrowLeft, label: t("navDashboard") }]}
     />
   )

@@ -23,10 +23,27 @@ export function StepSummary({
   const pricingModel = useOnboardingStore((s) => s.pricingModel)
   const standardRoomCount = useOnboardingStore((s) => s.standardRoomCount)
   const standardBaseRate = useOnboardingStore((s) => s.standardBaseRate)
+  const standardWaterMeterStart = useOnboardingStore((s) => s.standardWaterMeterStart)
+  const standardElectricMeterStart = useOnboardingStore((s) => s.standardElectricMeterStart)
   const customRooms = useOnboardingStore((s) => s.customRooms)
   const rooms = useMemo(
-    () => resolveRooms({ pricingModel, standardRoomCount, standardBaseRate, customRooms }),
-    [pricingModel, standardRoomCount, standardBaseRate, customRooms],
+    () =>
+      resolveRooms({
+        pricingModel,
+        standardRoomCount,
+        standardBaseRate,
+        standardWaterMeterStart,
+        standardElectricMeterStart,
+        customRooms,
+      }),
+    [
+      pricingModel,
+      standardRoomCount,
+      standardBaseRate,
+      standardWaterMeterStart,
+      standardElectricMeterStart,
+      customRooms,
+    ],
   )
   const tenants = useOnboardingStore((s) => s.tenants)
   const currency = useOnboardingStore((s) => s.currency)

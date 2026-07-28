@@ -4,7 +4,7 @@ import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
 import type { Currency, Invoice, LineItem, Unit } from "@/lib/types"
-import { invoiceSchema } from "@/lib/types"
+import { invoiceSchema, meterUsage } from "@/lib/types"
 import { formatInvoiceNumber, nextInvoiceNumber } from "@/lib/invoice-number"
 import {
   ELECTRIC_RATE_USD,
@@ -47,6 +47,42 @@ function firstOfMonth(): string {
 
 export type Draft = Omit<Invoice, "createdAt">
 
+export function newLineItem(partial?: Partial<LineItem>): LineItem {
+  return {
+    id: uid(),
+    label: "",
+    quantity: 1,
+    unit: "unit",
+    rate: 0,
+    ...partial,
+  }
+}
+
+// Every new draft starts with these three default categories so the user
+// isn't staring at an empty table — quick-add below can still re-add any of
+// them if deleted, or add extras.
+function defaultLineItems(): LineItem[] {
+  return [
+    newLineItem({ label: "Room rate", quantity: 1, unit: "month", rate: 0 }),
+    newLineItem({
+      label: "Electricity",
+      quantity: 0,
+      unit: "kW",
+      rate: ELECTRIC_RATE_USD,
+      previousMeter: 0,
+      recentMeter: 0,
+    }),
+    newLineItem({
+      label: "Water",
+      quantity: 0,
+      unit: "m³",
+      rate: WATER_RATE_USD,
+      previousMeter: 0,
+      recentMeter: 0,
+    }),
+  ]
+}
+
 function makeDraft(invoiceNumber = formatInvoiceNumber(1)): Draft {
   return {
     id: uid(),
@@ -56,29 +92,14 @@ function makeDraft(invoiceNumber = formatInvoiceNumber(1)): Draft {
     roomNumber: "",
     guestName: "",
     nationalId: "",
-    startDate: firstOfMonth(),
-    endDate: today(),
-    issueDate: today(),
-    dueDate: today(),
+    dateIn: firstOfMonth(),
+    dateOut: today(),
     currency: "USD",
     language: "en",
-    lineItems: [],
+    lineItems: defaultLineItems(),
     notes: NOTES_PLACEHOLDER,
-    waterUsageM3: 0,
-    electricUsageKWh: 0,
     waterRateUsd: WATER_RATE_USD,
     electricRateUsd: ELECTRIC_RATE_USD,
-  }
-}
-
-export function newLineItem(partial?: Partial<LineItem>): LineItem {
-  return {
-    id: uid(),
-    label: "",
-    quantity: 1,
-    unit: "unit",
-    rate: 0,
-    ...partial,
   }
 }
 
@@ -96,7 +117,6 @@ interface InvoiceState {
   removeLineItem: (id: string) => void
   moveLineItem: (fromIndex: number, toIndex: number) => void
   toggleSecurityFee: (label: string) => void
-  setUtilityRate: (kind: "water" | "electric", rateUsd: number) => void
   resetDraft: () => void
   saveInvoice: () => Invoice
   loadInvoice: (id: string) => void
@@ -170,6 +190,12 @@ export const useInvoiceStore = create<InvoiceState>()(
           } else if (patch.unit === "kW" && patch.rate === undefined) {
             nextPatch = { ...patch, rate: scaledRate(s.draft.electricRateUsd, s.draft.currency) }
           }
+          if (nextPatch.previousMeter !== undefined || nextPatch.recentMeter !== undefined) {
+            const current = s.draft.lineItems.find((item) => item.id === id)
+            const previousMeter = nextPatch.previousMeter ?? current?.previousMeter ?? 0
+            const recentMeter = nextPatch.recentMeter ?? current?.recentMeter ?? 0
+            nextPatch = { ...nextPatch, quantity: meterUsage(recentMeter, previousMeter) }
+          }
           return {
             errors: {},
             draft: {
@@ -222,21 +248,6 @@ export const useInvoiceStore = create<InvoiceState>()(
                       rate: SECURITY_FEE_AMOUNT,
                     },
                   ],
-            },
-          }
-        }),
-      setUtilityRate: (kind, rateUsd) =>
-        set((s) => {
-          const field = kind === "water" ? "waterRateUsd" : "electricRateUsd"
-          const unit: Unit = kind === "water" ? "m³" : "kW"
-          return {
-            errors: {},
-            draft: {
-              ...s.draft,
-              [field]: rateUsd,
-              lineItems: s.draft.lineItems.map((item) =>
-                item.unit === unit ? { ...item, rate: scaledRate(rateUsd, s.draft.currency) } : item,
-              ),
             },
           }
         }),

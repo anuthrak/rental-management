@@ -16,8 +16,6 @@ export type OnboardingTenantInput = {
   agreedRent: number
   securityDeposit: number
   securityDepositStatus: "HELD" | "REFUNDED" | "APPLIED_TO_RENT"
-  waterMeterStart: number
-  electricMeterStart: number
 }
 
 export type OnboardingSubmission = {
@@ -26,7 +24,12 @@ export type OnboardingSubmission = {
   waterRate: number
   electricRate: number
   invoiceNoteTemplate: string
-  rooms: { roomNumber: string; targetPrice: number }[]
+  rooms: {
+    roomNumber: string
+    targetPrice: number
+    waterMeterStart: number
+    electricMeterStart: number
+  }[]
   tenants: OnboardingTenantInput[]
 }
 
@@ -76,6 +79,15 @@ export async function completeOnboarding(
           },
         })
 
+        await tx.meterReading.create({
+          data: {
+            roomId: createdRoom.id,
+            waterMeterValue: room.waterMeterStart,
+            electricMeterValue: room.electricMeterStart,
+            notes: "Initial reading (onboarding)",
+          },
+        })
+
         if (!tenantInput) continue
 
         const tenant = await tx.tenant.create({
@@ -100,15 +112,6 @@ export async function completeOnboarding(
             securityDeposit: tenantInput.securityDeposit,
             securityDepositStatus: tenantInput.securityDepositStatus,
             isActive: true,
-          },
-        })
-
-        await tx.meterReading.create({
-          data: {
-            roomId: createdRoom.id,
-            waterMeterValue: tenantInput.waterMeterStart,
-            electricMeterValue: tenantInput.electricMeterStart,
-            notes: "Initial reading (onboarding)",
           },
         })
       }

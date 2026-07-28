@@ -1,5 +1,6 @@
 import { getSession } from "@/lib/auth/session"
 import { getInvoices } from "@/lib/db/queries"
+import { GlobalStatusBar } from "@/components/global-status-bar"
 import { PaymentsHeader } from "@/components/dashboard/payments-header"
 import { PaymentsView } from "@/components/dashboard/payments-view"
 
@@ -12,10 +13,11 @@ export default async function PaymentsPage() {
   const invoices = await getInvoices(scopeUserId)
 
   return (
-    <main className="mx-auto min-h-svh w-full max-w-7xl px-4 py-6 sm:px-6 lg:py-10">
-      <PaymentsHeader />
-
-      <PaymentsView invoices={invoices} />
-    </main>
+    <>
+      <PaymentsHeader banner={<GlobalStatusBar />} />
+      <main className="mx-auto min-h-svh w-full max-w-7xl px-4 py-6 sm:px-6 lg:py-10">
+        <PaymentsView invoices={invoices} />
+      </main>
+    </>
   )
 }

@@ -23,6 +23,10 @@ export function StepProperty() {
   const setStandardRoomCount = useOnboardingStore((s) => s.setStandardRoomCount)
   const standardBaseRate = useOnboardingStore((s) => s.standardBaseRate)
   const setStandardBaseRate = useOnboardingStore((s) => s.setStandardBaseRate)
+  const standardWaterMeterStart = useOnboardingStore((s) => s.standardWaterMeterStart)
+  const setStandardWaterMeterStart = useOnboardingStore((s) => s.setStandardWaterMeterStart)
+  const standardElectricMeterStart = useOnboardingStore((s) => s.standardElectricMeterStart)
+  const setStandardElectricMeterStart = useOnboardingStore((s) => s.setStandardElectricMeterStart)
   const customRooms = useOnboardingStore((s) => s.customRooms)
   const addCustomRoom = useOnboardingStore((s) => s.addCustomRoom)
   const updateCustomRoom = useOnboardingStore((s) => s.updateCustomRoom)
@@ -126,6 +130,30 @@ export function StepProperty() {
               {t("perMonthSuffix")}
             </p>
           )}
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="standardWaterMeterStart">{t("waterMeterStartField")}</Label>
+            <Input
+              id="standardWaterMeterStart"
+              type="number"
+              min={0}
+              step="any"
+              className="h-11 w-full"
+              value={standardWaterMeterStart}
+              onChange={(e) => setStandardWaterMeterStart(Number(e.target.value))}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="standardElectricMeterStart">{t("electricMeterStartField")}</Label>
+            <Input
+              id="standardElectricMeterStart"
+              type="number"
+              min={0}
+              step="any"
+              className="h-11 w-full"
+              value={standardElectricMeterStart}
+              onChange={(e) => setStandardElectricMeterStart(Number(e.target.value))}
+            />
+          </div>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -137,41 +165,75 @@ export function StepProperty() {
           {customRooms.map((room, index) => (
             <div
               key={room.id}
-              className="flex flex-col gap-2 rounded-lg border border-border p-3 sm:flex-row sm:items-end sm:rounded-none sm:border-0 sm:p-0"
+              className="flex flex-col gap-2 rounded-lg border border-border p-3"
             >
-              <div className="flex-1">
-                <Label className="mb-1 text-xs text-muted-foreground">{t("roomNameField")}</Label>
-                <Input
-                  className="h-11 w-full"
-                  value={room.roomNumber}
-                  placeholder={`e.g. Room ${index + 1}`}
-                  onChange={(e) => updateCustomRoom(room.id, { roomNumber: e.target.value })}
-                />
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                <div className="flex-1">
+                  <Label className="mb-1 text-xs text-muted-foreground">{t("roomNameField")}</Label>
+                  <Input
+                    className="h-11 w-full"
+                    value={room.roomNumber}
+                    placeholder={`e.g. Room ${index + 1}`}
+                    onChange={(e) => updateCustomRoom(room.id, { roomNumber: e.target.value })}
+                  />
+                </div>
+                <div className="flex items-end gap-2">
+                  <div className="flex-1 sm:w-32 sm:flex-none">
+                    <Label className="mb-1 text-xs text-muted-foreground">{t("rateField")}</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      step="any"
+                      className="h-11 w-full"
+                      value={room.targetPrice}
+                      onChange={(e) =>
+                        updateCustomRoom(room.id, { targetPrice: Number(e.target.value) })
+                      }
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-11 w-11 shrink-0"
+                    aria-label={`${t("removeAction")} ${room.roomNumber || ""}`}
+                    onClick={() => removeCustomRoom(room.id)}
+                  >
+                    <Trash2 className="text-destructive" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-end gap-2">
-                <div className="flex-1 sm:w-32 sm:flex-none">
-                  <Label className="mb-1 text-xs text-muted-foreground">{t("rateField")}</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="mb-1 text-xs text-muted-foreground">
+                    {t("waterMeterStartField")}
+                  </Label>
                   <Input
                     type="number"
                     min={0}
                     step="any"
                     className="h-11 w-full"
-                    value={room.targetPrice}
+                    value={room.waterMeterStart}
                     onChange={(e) =>
-                      updateCustomRoom(room.id, { targetPrice: Number(e.target.value) })
+                      updateCustomRoom(room.id, { waterMeterStart: Number(e.target.value) })
                     }
                   />
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-11 w-11 shrink-0"
-                  aria-label={`${t("removeAction")} ${room.roomNumber || ""}`}
-                  onClick={() => removeCustomRoom(room.id)}
-                >
-                  <Trash2 className="text-destructive" />
-                </Button>
+                <div>
+                  <Label className="mb-1 text-xs text-muted-foreground">
+                    {t("electricMeterStartField")}
+                  </Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step="any"
+                    className="h-11 w-full"
+                    value={room.electricMeterStart}
+                    onChange={(e) =>
+                      updateCustomRoom(room.id, { electricMeterStart: Number(e.target.value) })
+                    }
+                  />
+                </div>
               </div>
             </div>
           ))}

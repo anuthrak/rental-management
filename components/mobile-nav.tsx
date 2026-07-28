@@ -32,11 +32,11 @@ function NavTab({
     <Link
       href={href}
       className={cn(
-        "flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[11px] font-medium transition-transform active:scale-95",
+        "flex min-h-11 flex-1 flex-col items-center justify-center gap-1 rounded-lg py-1 text-[11px] font-medium transition-transform active:scale-95",
         active ? "text-primary" : "text-muted-foreground",
       )}
     >
-      <Icon className="size-5" />
+      <Icon className="size-7" />
       <span className="truncate">{label}</span>
     </Link>
   )
@@ -56,7 +56,7 @@ export function MobileNav() {
     <>
       <nav
         aria-label="Primary"
-        className="fixed inset-x-0 bottom-0 z-50 flex min-h-11 items-stretch gap-1 border-t border-border bg-card px-2 pt-2 sm:hidden"
+        className="fixed inset-x-0 bottom-0 z-50 flex min-h-11 items-stretch gap-1 border-t border-border bg-card px-2 pt-3 sm:hidden"
         style={{
           paddingBottom: "max(env(safe-area-inset-bottom), 1.25rem)",
         }}
@@ -67,9 +67,9 @@ export function MobileNav() {
         <button
           type="button"
           onClick={() => setMoreOpen(true)}
-          className="flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[11px] font-medium text-muted-foreground transition-transform active:scale-95"
+          className="flex min-h-11 flex-1 flex-col items-center justify-center gap-1 rounded-lg py-1 text-[11px] font-medium text-muted-foreground transition-transform active:scale-95"
         >
-          <MoreHorizontal className="size-5" />
+          <MoreHorizontal className="size-7" />
           <span className="truncate">{t("navMore")}</span>
         </button>
       </nav>

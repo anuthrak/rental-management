@@ -4,7 +4,6 @@ import { Inter, Space_Grotesk } from 'next/font/google'
 
 import { ThemeProvider } from '@/components/theme-provider'
 import { I18nProvider } from '@/components/i18n-provider'
-import { GlobalStatusBar } from '@/components/global-status-bar'
 import { SimpleModeEffect } from '@/components/simple-mode-effect'
 import { MobileNav } from '@/components/mobile-nav'
 import { TutorialSheet } from '@/components/tutorial-sheet'
@@ -58,7 +57,6 @@ export default async function RootLayout({
         >
           <I18nProvider>
             <SimpleModeEffect />
-            <GlobalStatusBar />
             <div className="flex flex-1 flex-col pb-mobile-nav">{children}</div>
             <MobileNav />
             <TutorialSheet />

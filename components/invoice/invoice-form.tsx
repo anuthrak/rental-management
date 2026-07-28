@@ -3,9 +3,9 @@
 import { Building2, CalendarRange, Droplets, NotebookPen, ReceiptText, User } from "lucide-react"
 
 import { CURRENCIES, type Currency } from "@/lib/types"
-import { electricCost, usdToKhr, waterCost } from "@/lib/calc"
+import { USD_TO_KHR_RATE, usdToKhr } from "@/lib/calc"
 import { formatCurrency, formatKHR } from "@/lib/currency"
-import { addDaysDateOnly, monthBounds, todayDateOnly } from "@/lib/date"
+import { monthBounds } from "@/lib/date"
 import { useI18n } from "@/components/i18n-provider"
 import { useInvoiceStore } from "@/store/use-invoice-store"
 import { useSimpleModeStore } from "@/store/use-simple-mode-store"
@@ -97,20 +97,11 @@ export function InvoiceForm({
   const { t, locale } = useI18n()
   const simpleMode = useSimpleModeStore((s) => s.simpleMode)
   const currency = useInvoiceStore((s) => s.draft.currency)
-  const startDate = useInvoiceStore((s) => s.draft.startDate)
+  const dateIn = useInvoiceStore((s) => s.draft.dateIn)
   const updateDraft = useInvoiceStore((s) => s.updateDraft)
-  const waterUsageM3 = useInvoiceStore((s) => s.draft.waterUsageM3)
-  const electricUsageKWh = useInvoiceStore((s) => s.draft.electricUsageKWh)
   const waterRateUsd = useInvoiceStore((s) => s.draft.waterRateUsd)
   const electricRateUsd = useInvoiceStore((s) => s.draft.electricRateUsd)
-  const setUtilityRate = useInvoiceStore((s) => s.setUtilityRate)
   const notes = useInvoiceStore((s) => s.draft.notes)
-
-  function displayUtilityAmount(amountUsd: number): string {
-    return currency === "KHR"
-      ? formatCurrency(usdToKhr(amountUsd), "KHR", locale)
-      : formatCurrency(amountUsd, "USD", locale)
-  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -201,149 +192,56 @@ export function InvoiceForm({
                 id="billingMonth"
                 type="month"
                 className="min-h-11"
-                value={startDate.slice(0, 7)}
+                value={dateIn.slice(0, 7)}
                 onChange={(e) => {
                   if (!e.target.value) return
                   const { start, end } = monthBounds(e.target.value)
-                  const issueDate = todayDateOnly()
-                  updateDraft({
-                    startDate: start,
-                    endDate: end,
-                    issueDate,
-                    dueDate: addDaysDateOnly(issueDate, 7),
-                  })
+                  updateDraft({ dateIn: start, dateOut: end })
                 }}
               />
             </div>
             <AdvancedSection>
               <div className="grid gap-4 sm:grid-cols-2">
-                <FormField id="startDate" label={t("startDate")} type="date" />
-                <FormField id="endDate" label={t("endDate")} type="date" />
-                <FormField id="issueDate" label={t("issueDate")} type="date" />
-                <FormField id="dueDate" label={t("dueDateField")} type="date" />
+                <FormField id="dateIn" label={t("dateInField")} type="date" />
+                <FormField id="dateOut" label={t("dateOutField")} type="date" />
               </div>
             </AdvancedSection>
           </>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
-            <FormField id="startDate" label={t("startDate")} type="date" />
-            <FormField id="endDate" label={t("endDate")} type="date" />
-            <FormField id="issueDate" label={t("issueDate")} type="date" />
-            <FormField id="dueDate" label={t("dueDateField")} type="date" />
+            <FormField id="dateIn" label={t("dateInField")} type="date" />
+            <FormField id="dateOut" label={t("dateOutField")} type="date" />
           </div>
         )}
       </section>
 
       <Separator />
 
-      {/* Utility usage (excluded from the grand total) */}
-      <section className="flex flex-col gap-4">
-        <SectionHeading icon={Droplets}>{t("utilityUsage")}</SectionHeading>
-
-        <AdvancedSection className="flex flex-col gap-4">
-        {/* Base unit rates — editable, USD-anchored with a live KHR reference */}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="waterRate">{t("waterRateField")}</Label>
-            <Input
-              id="waterRate"
-              type="number"
-              min={0}
-              step="any"
-              inputMode="decimal"
-              value={waterRateUsd}
-              onChange={(e) =>
-                setUtilityRate("water", e.target.value === "" ? 0 : Number(e.target.value))
-              }
-            />
-            <span className="text-xs text-muted-foreground">
-              ({formatKHR(usdToKhr(waterRateUsd))})
-            </span>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="electricRate">{t("electricRateField")}</Label>
-            <Input
-              id="electricRate"
-              type="number"
-              min={0}
-              step="any"
-              inputMode="decimal"
-              value={electricRateUsd}
-              onChange={(e) =>
-                setUtilityRate("electric", e.target.value === "" ? 0 : Number(e.target.value))
-              }
-            />
-            <span className="text-xs text-muted-foreground">
-              ({formatKHR(usdToKhr(electricRateUsd))})
-            </span>
-          </div>
-        </div>
-
-        {/* Aggregate usage for this invoice — informational only */}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="waterUsage">{t("waterUsageLabel")}</Label>
-            <Input
-              id="waterUsage"
-              type="number"
-              min={0}
-              step="any"
-              inputMode="decimal"
-              value={waterUsageM3}
-              onChange={(e) =>
-                updateDraft({
-                  waterUsageM3: e.target.value === "" ? 0 : Number(e.target.value),
-                })
-              }
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="electricUsage">{t("electricUsageLabel")}</Label>
-            <Input
-              id="electricUsage"
-              type="number"
-              min={0}
-              step="any"
-              inputMode="decimal"
-              value={electricUsageKWh}
-              onChange={(e) =>
-                updateDraft({
-                  electricUsageKWh: e.target.value === "" ? 0 : Number(e.target.value),
-                })
-              }
-            />
-          </div>
-        </div>
-        {(waterUsageM3 > 0 || electricUsageKWh > 0) && (
-          <p className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
-            {waterUsageM3 > 0 && (
-              <>
-                {t("waterCostNote")}: {displayUtilityAmount(waterCost(waterUsageM3, waterRateUsd))}
-                {electricUsageKWh > 0 && " · "}
-              </>
-            )}
-            {electricUsageKWh > 0 && (
-              <>
-                {t("electricCostNote")}:{" "}
-                {displayUtilityAmount(electricCost(electricUsageKWh, electricRateUsd))}
-              </>
-            )}
-            {" — "}
-            {t("utilityNoteTitle")}
-          </p>
-        )}
-        </AdvancedSection>
-      </section>
-
-      <Separator />
-
-      {/* Line items */}
+      {/* Categories (line items) */}
       <section className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <SectionHeading icon={ReceiptText}>{t("lineItems")}</SectionHeading>
         </div>
         <LineItemTable />
         <LineItemsError />
+      </section>
+
+      <Separator />
+
+      {/* Utility & Currency Notes — informational reference only */}
+      <section className="flex flex-col gap-4">
+        <SectionHeading icon={Droplets}>{t("utilityUsage")}</SectionHeading>
+        <AdvancedSection className="flex flex-col gap-1.5 text-sm text-muted-foreground">
+          <p>
+            {t("waterCostNote")}: {formatCurrency(waterRateUsd, "USD", locale)}/m³ ({formatKHR(usdToKhr(waterRateUsd))}/m³)
+          </p>
+          <p>
+            {t("electricCostNote")}: {formatCurrency(electricRateUsd, "USD", locale)}/kWh ({formatKHR(usdToKhr(electricRateUsd))}/kWh)
+          </p>
+          <p>
+            1 USD ≈ {formatKHR(USD_TO_KHR_RATE)}
+          </p>
+        </AdvancedSection>
       </section>
 
       <InvoiceTotals />

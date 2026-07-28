@@ -15,6 +15,11 @@ export const lineItemSchema = z.object({
   quantity: z.number().min(0, "Must be 0 or more"),
   unit: z.enum(UNITS),
   rate: z.number().min(0, "Must be 0 or more"),
+  // Only meaningful for water (m³) / electric (kW) rows — when present,
+  // quantity is derived as recentMeter - previousMeter instead of entered
+  // directly (see meterUsage below).
+  previousMeter: z.number().min(0, "Must be 0 or more").optional(),
+  recentMeter: z.number().min(0, "Must be 0 or more").optional(),
 })
 
 export const invoiceSchema = z
@@ -26,26 +31,26 @@ export const invoiceSchema = z
     roomNumber: z.string(),
     guestName: z.string().min(1, "Guest name is required"),
     nationalId: z.string(),
-    startDate: z.string().min(1, "Start date is required"),
-    endDate: z.string().min(1, "End date is required"),
-    issueDate: z.string().min(1, "Issue date is required"),
-    dueDate: z.string().min(1, "Due date is required"),
+    dateIn: z.string().min(1, "Start date is required"),
+    dateOut: z.string().min(1, "End date is required"),
     currency: z.enum(CURRENCIES),
     language: z.enum(LANGUAGES),
     lineItems: z.array(lineItemSchema).min(1, "Add at least one line item"),
     notes: z.string(),
-    waterUsageM3: z.number().min(0, "Must be 0 or more"),
-    electricUsageKWh: z.number().min(0, "Must be 0 or more"),
     waterRateUsd: z.number().min(0, "Must be 0 or more"),
     electricRateUsd: z.number().min(0, "Must be 0 or more"),
     createdAt: z.string(),
   })
-  .refine((v) => new Date(v.endDate) >= new Date(v.startDate), {
+  .refine((v) => new Date(v.dateOut) >= new Date(v.dateIn), {
     message: "End date must be on or after the start date",
-    path: ["endDate"],
+    path: ["dateOut"],
   })
 
 export type LineItem = z.infer<typeof lineItemSchema>
 export type Invoice = z.infer<typeof invoiceSchema>
 
 export type LineItemWithAmount = LineItem & { amount: number }
+
+export function meterUsage(recent: number, previous: number): number {
+  return Math.max(0, recent - previous)
+}
