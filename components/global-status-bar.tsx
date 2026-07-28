@@ -6,6 +6,12 @@ import { getSession, isDemoMode } from "@/lib/auth/session"
 import { logoutAction } from "@/app/login/actions"
 import { Button, buttonVariants } from "@/components/ui/button"
 
+function capitalizeEmailPrefix(email: string): string {
+  const prefix = email.split("@")[0] || email
+  const firstSegment = prefix.split(/[._+-]/)[0] || prefix
+  return firstSegment.charAt(0).toUpperCase() + firstSegment.slice(1)
+}
+
 export async function GlobalStatusBar() {
   const [demoMode, session] = await Promise.all([isDemoMode(), getSession()])
 
@@ -33,9 +39,11 @@ export async function GlobalStatusBar() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
-    select: { email: true, businessName: true },
+    select: { email: true, name: true, businessName: true },
   })
   if (!user) return null
+
+  const displayName = user.name?.trim() || capitalizeEmailPrefix(user.email)
 
   return (
     <div className="flex shrink-0 items-center justify-center gap-3 overflow-hidden border-b border-border bg-muted/40 px-3 py-2 text-center text-sm font-medium">
@@ -44,10 +52,10 @@ export async function GlobalStatusBar() {
           <>
             <span className="font-medium text-foreground">{user.businessName}</span>
             {" · "}
-            {user.email}
+            {displayName}
           </>
         ) : (
-          <span className="font-medium text-foreground">{user.email}</span>
+          <span className="font-medium text-foreground">{displayName}</span>
         )}
       </span>
       <form action={logoutAction} className="shrink-0">

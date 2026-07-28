@@ -34,12 +34,6 @@ export function InvoicePreview({
     >
       {/* Header band */}
       <div className="relative flex items-start justify-between gap-4 bg-primary p-6 pt-16 text-primary-foreground">
-        <div
-          className="absolute top-4 right-4 flex h-10 w-24 items-center justify-center rounded-md border border-dashed border-primary-foreground/40 text-[10px] font-medium tracking-wide text-primary-foreground/60 uppercase"
-          aria-hidden
-        >
-          {t("logoPlaceholder")}
-        </div>
         <div className="flex flex-col gap-1">
           <span className="text-xs uppercase tracking-wide text-primary-foreground/70">
             {t("invoiceWord")}
@@ -183,11 +177,18 @@ export function InvoicePreview({
         )}
         <div className="flex items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">{t("thankYou")}</p>
-          <div
-            className="flex h-16 w-32 shrink-0 items-center justify-center rounded-md border border-dashed border-border text-center text-[10px] font-medium tracking-wide text-muted-foreground uppercase"
-            aria-hidden
-          >
-            {t("stampPlaceholder")}
+          <div className="flex shrink-0 translate-x-10 -translate-y-8 flex-col items-center">
+            <span className="text-[14px] text-bold font-large tracking-wide text-muted-foreground uppercase">
+              {t("ownerLabel")}
+            </span>
+            <div className="flex h-24 w-48 items-center justify-center" aria-hidden>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/logo/stamp-transparent.png"
+                alt=""
+                className="max-h-full max-w-full object-contain"
+              />
+            </div>
           </div>
         </div>
       </div>

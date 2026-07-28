@@ -84,6 +84,7 @@ const en = {
   notesLabel: "Notes",
   logoPlaceholder: "LOGO",
   stampPlaceholder: "Official stamp / signature",
+  ownerLabel: "Owner",
   khrEquivalent: "≈ Riel",
   dragToReorder: "Drag to reorder",
 
@@ -154,6 +155,20 @@ const en = {
   noReadingsYet: "No meter readings logged yet.",
   invoiceMarkedPaidToast: "Invoice marked as paid",
   invoiceMarkedUnpaidToast: "Invoice marked as unpaid",
+
+  // Auth pages (login / signup)
+  authEmailLabel: "Email",
+  authPasswordLabel: "Password",
+  authNameLabel: "Name",
+  authOrDivider: "or",
+  authTryDemoButton: "Try Demo / Guest Mode",
+  loginPageTitle: "Log in",
+  authLoginButton: "Log in",
+  noAccountText: "Don't have an account?",
+  signUpLink: "Sign up",
+  signupPageTitle: "Create an account",
+  authCreateAccountButton: "Create account",
+  alreadyHaveAccountText: "Already have an account?",
 
   // Onboarding — language step & tutorial
   chooseLanguageTitle: "Choose your language",
@@ -313,6 +328,7 @@ const km: typeof en = {
   notesLabel: "កំណត់ចំណាំ",
   logoPlaceholder: "LOGO",
   stampPlaceholder: "ត្រា/ហត្ថលេខាផ្លូវការ",
+  ownerLabel: "ម្ចាស់ផ្ទះ",
   khrEquivalent: "≈ រៀល",
   dragToReorder: "អូសដើម្បីតម្រៀបឡើងវិញ",
 
@@ -383,6 +399,20 @@ const km: typeof en = {
   noReadingsYet: "មិនទាន់មានការកត់ត្រាម៉ែត្រនៅឡើយទេ។",
   invoiceMarkedPaidToast: "វិក្កយបត្របានសម្គាល់ថាបានបង់",
   invoiceMarkedUnpaidToast: "វិក្កយបត្របានសម្គាល់ថាមិនទាន់បង់",
+
+  // Auth pages (login / signup)
+  authEmailLabel: "អ៊ីមែល",
+  authPasswordLabel: "ពាក្យសម្ងាត់",
+  authNameLabel: "ឈ្មោះ",
+  authOrDivider: "ឬ",
+  authTryDemoButton: "សាកល្បង / របៀបភ្ញៀវ",
+  loginPageTitle: "ចូល",
+  authLoginButton: "ចូល",
+  noAccountText: "មិនទាន់មានគណនីមែនទេ?",
+  signUpLink: "ចុះឈ្មោះ",
+  signupPageTitle: "បង្កើតគណនី",
+  authCreateAccountButton: "បង្កើតគណនី",
+  alreadyHaveAccountText: "មានគណនីរួចហើយ?",
 
   // Onboarding — language step & tutorial
   chooseLanguageTitle: "ជ្រើសរើសភាសារបស់អ្នក",

@@ -32,6 +32,7 @@ export function StepProperty() {
         <Label htmlFor="propertyName">Property / business name</Label>
         <Input
           id="propertyName"
+          className="h-11 w-full"
           value={propertyName}
           onChange={(e) => setPropertyName(e.target.value)}
           placeholder="e.g. Riverside Apartments"
@@ -104,6 +105,7 @@ export function StepProperty() {
               type="number"
               min={0}
               step="1"
+              className="h-11 w-full"
               value={standardRoomCount}
               onChange={(e) => setStandardRoomCount(Number(e.target.value))}
             />
@@ -115,6 +117,7 @@ export function StepProperty() {
               type="number"
               min={0}
               step="any"
+              className="h-11 w-full"
               value={standardBaseRate}
               onChange={(e) => setStandardBaseRate(Number(e.target.value))}
             />
@@ -135,37 +138,44 @@ export function StepProperty() {
             </p>
           )}
           {customRooms.map((room, index) => (
-            <div key={room.id} className="flex items-center gap-2">
+            <div
+              key={room.id}
+              className="flex flex-col gap-2 rounded-lg border border-border p-3 sm:flex-row sm:items-end sm:rounded-none sm:border-0 sm:p-0"
+            >
               <div className="flex-1">
                 <Label className="mb-1 text-xs text-muted-foreground">Room name</Label>
                 <Input
+                  className="h-11 w-full"
                   value={room.roomNumber}
                   placeholder={`e.g. Room ${index + 1}`}
                   onChange={(e) => updateCustomRoom(room.id, { roomNumber: e.target.value })}
                 />
               </div>
-              <div className="w-32">
-                <Label className="mb-1 text-xs text-muted-foreground">Rate ($/mo)</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  step="any"
-                  value={room.targetPrice}
-                  onChange={(e) =>
-                    updateCustomRoom(room.id, { targetPrice: Number(e.target.value) })
-                  }
-                />
+              <div className="flex items-end gap-2">
+                <div className="flex-1 sm:w-32 sm:flex-none">
+                  <Label className="mb-1 text-xs text-muted-foreground">Rate ($/mo)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step="any"
+                    className="h-11 w-full"
+                    value={room.targetPrice}
+                    onChange={(e) =>
+                      updateCustomRoom(room.id, { targetPrice: Number(e.target.value) })
+                    }
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-11 w-11 shrink-0"
+                  aria-label={`Remove ${room.roomNumber || "room"}`}
+                  onClick={() => removeCustomRoom(room.id)}
+                >
+                  <Trash2 className="text-destructive" />
+                </Button>
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="mt-5"
-                aria-label={`Remove ${room.roomNumber || "room"}`}
-                onClick={() => removeCustomRoom(room.id)}
-              >
-                <Trash2 className="text-destructive" />
-              </Button>
             </div>
           ))}
           <div>

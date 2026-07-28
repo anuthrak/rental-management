@@ -33,7 +33,7 @@ export function StepPreferences() {
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="default-currency">Default currency</Label>
         <Select value={currency} onValueChange={(v) => setCurrency(v as OnboardingCurrency)}>
-          <SelectTrigger id="default-currency" className="w-full sm:w-64">
+          <SelectTrigger id="default-currency" className="h-11 w-full sm:w-64">
             <SelectValue>
               {(value: OnboardingCurrency | null) => (value ? CURRENCY_LABELS[value] : "Select a currency")}
             </SelectValue>
@@ -58,6 +58,7 @@ export function StepPreferences() {
             type="number"
             min={0}
             step="any"
+            className="h-11 w-full"
             value={waterRate}
             onChange={(e) => setWaterRate(Number(e.target.value))}
           />
@@ -69,6 +70,7 @@ export function StepPreferences() {
             type="number"
             min={0}
             step="any"
+            className="h-11 w-full"
             value={electricRate}
             onChange={(e) => setElectricRate(Number(e.target.value))}
           />

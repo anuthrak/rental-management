@@ -120,7 +120,7 @@ export function StepTenants() {
                   patchDraft({ roomId, agreedRent: room?.targetPrice ?? draft.agreedRent })
                 }}
               >
-                <SelectTrigger id="tenant-room" className="w-full">
+                <SelectTrigger id="tenant-room" className="h-11 w-full">
                   <SelectValue>
                     {(value: string | null) =>
                       rooms.find((r) => r.id === value)?.roomNumber ?? "Select a room"
@@ -142,6 +142,7 @@ export function StepTenants() {
               <Label htmlFor="tenant-name">Full name</Label>
               <Input
                 id="tenant-name"
+                className="h-11 w-full"
                 value={draft.fullName}
                 onChange={(e) => patchDraft({ fullName: e.target.value })}
                 placeholder="Jane Doe"
@@ -151,6 +152,7 @@ export function StepTenants() {
               <Label htmlFor="tenant-phone">Phone</Label>
               <Input
                 id="tenant-phone"
+                className="h-11 w-full"
                 value={draft.phone}
                 onChange={(e) => patchDraft({ phone: e.target.value })}
                 placeholder="+855 12 345 678"
@@ -161,6 +163,7 @@ export function StepTenants() {
               <Input
                 id="tenant-email"
                 type="email"
+                className="h-11 w-full"
                 value={draft.email}
                 onChange={(e) => patchDraft({ email: e.target.value })}
               />
@@ -169,6 +172,7 @@ export function StepTenants() {
               <Label htmlFor="tenant-id">National ID / Passport #</Label>
               <Input
                 id="tenant-id"
+                className="h-11 w-full"
                 value={draft.nationalId}
                 onChange={(e) => patchDraft({ nationalId: e.target.value })}
               />
@@ -183,6 +187,7 @@ export function StepTenants() {
               <Input
                 id="lease-start"
                 type="date"
+                className="h-11 w-full"
                 value={draft.leaseStartDate}
                 onChange={(e) => patchDraft({ leaseStartDate: e.target.value })}
               />
@@ -192,6 +197,7 @@ export function StepTenants() {
               <Input
                 id="lease-end"
                 type="date"
+                className="h-11 w-full"
                 value={draft.leaseEndDate}
                 onChange={(e) => patchDraft({ leaseEndDate: e.target.value })}
               />
@@ -203,6 +209,7 @@ export function StepTenants() {
                 type="number"
                 min={0}
                 step="any"
+                className="h-11 w-full"
                 value={draft.agreedRent}
                 onChange={(e) => patchDraft({ agreedRent: Number(e.target.value) })}
               />
@@ -218,6 +225,7 @@ export function StepTenants() {
                   type="number"
                   min={0}
                   step="any"
+                  className="h-11 w-full"
                   value={draft.securityDeposit}
                   onChange={(e) => patchDraft({ securityDeposit: Number(e.target.value) })}
                 />
@@ -228,7 +236,7 @@ export function StepTenants() {
                   value={draft.securityDepositStatus}
                   onValueChange={(v) => patchDraft({ securityDepositStatus: v as SecurityDepositStatus })}
                 >
-                  <SelectTrigger id="deposit-status" className="w-full">
+                  <SelectTrigger id="deposit-status" className="h-11 w-full">
                     <SelectValue>
                       {(value: SecurityDepositStatus | null) =>
                         value ? DEPOSIT_STATUS_LABELS[value] : "Select a status"
@@ -253,6 +261,7 @@ export function StepTenants() {
                   type="number"
                   min={0}
                   step="any"
+                  className="h-11 w-full"
                   value={draft.waterMeterStart}
                   onChange={(e) => patchDraft({ waterMeterStart: Number(e.target.value) })}
                 />
@@ -264,6 +273,7 @@ export function StepTenants() {
                   type="number"
                   min={0}
                   step="any"
+                  className="h-11 w-full"
                   value={draft.electricMeterStart}
                   onChange={(e) => patchDraft({ electricMeterStart: Number(e.target.value) })}
                 />
@@ -274,7 +284,11 @@ export function StepTenants() {
           <Separator />
 
           <div>
-            <Button type="submit" disabled={!draft.roomId || !draft.fullName.trim()}>
+            <Button
+              type="submit"
+              className="h-11 w-full sm:w-auto"
+              disabled={!draft.roomId || !draft.fullName.trim()}
+            >
               <UserPlus data-icon="inline-start" />
               Add tenant
             </Button>
