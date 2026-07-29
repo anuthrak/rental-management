@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation"
 
 import { prisma } from "@/lib/prisma"
-import { getSession } from "@/lib/auth/session"
+import { getSession, isDemoMode } from "@/lib/auth/session"
 
 export type OnboardingTenantInput = {
   roomNumber: string
@@ -126,7 +126,7 @@ export async function completeOnboarding(
 
 export async function skipOnboarding(): Promise<void> {
   const session = await getSession()
-  if (!session) redirect("/login")
+  if (!session && !(await isDemoMode())) redirect("/login")
   redirect("/")
 }
 

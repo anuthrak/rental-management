@@ -8,6 +8,7 @@ import { SimpleModeEffect } from '@/components/simple-mode-effect'
 import { MobileNav } from '@/components/mobile-nav'
 import { TutorialSheet } from '@/components/tutorial-sheet'
 import { Toaster } from '@/components/ui/sonner'
+import { isDemoMode } from '@/lib/auth/session'
 import './globals.css'
 
 const inter = Inter({
@@ -42,6 +43,8 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const demoMode = await isDemoMode()
+
   return (
     <html
       lang="en"
@@ -58,7 +61,7 @@ export default async function RootLayout({
           <I18nProvider>
             <SimpleModeEffect />
             <div className="flex flex-1 flex-col pb-mobile-nav">{children}</div>
-            <MobileNav />
+            <MobileNav isDemoMode={demoMode} />
             <TutorialSheet />
             <Toaster richColors position="top-center" />
           </I18nProvider>

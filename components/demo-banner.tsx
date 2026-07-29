@@ -15,6 +15,17 @@ export function DemoBanner() {
         <span className="hidden sm:inline">{t("demoBannerFull")}</span>
       </span>
       <Link
+        href="/onboarding"
+        className={buttonVariants({
+          variant: "ghost",
+          size: "sm",
+          className:
+            "min-h-11 shrink-0 border border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground sm:min-h-8",
+        })}
+      >
+        {t("testOnboardingLabel")}
+      </Link>
+      <Link
         href="/signup"
         className={buttonVariants({ variant: "secondary", size: "sm", className: "min-h-11 shrink-0 sm:min-h-8" })}
       >

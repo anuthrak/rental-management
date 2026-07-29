@@ -13,6 +13,29 @@ export async function updateRoomTargetPrice(roomId: string, targetPrice: number)
   revalidatePath("/")
 }
 
+export async function updateRoomName(
+  roomId: string,
+  roomNumber: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const trimmed = roomNumber.trim()
+  if (!trimmed) {
+    return { ok: false, error: "Room name is required" }
+  }
+  try {
+    await prisma.room.update({
+      where: { id: roomId },
+      data: { roomNumber: trimmed },
+    })
+  } catch {
+    // Most likely the @@unique([userId, roomNumber]) constraint — another
+    // room in this account already has that name.
+    return { ok: false, error: "Room number already exists" }
+  }
+  revalidatePath("/")
+  revalidatePath("/payments")
+  return { ok: true }
+}
+
 export async function assignTenant(
   roomId: string,
   input: { fullName: string; phone: string; agreedRent: number },

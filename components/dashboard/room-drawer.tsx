@@ -7,6 +7,7 @@ import { toast } from "sonner"
 
 import type { DashboardRoom } from "@/lib/db/queries"
 import { ELECTRIC_RATE_USD, WATER_RATE_USD } from "@/lib/calc"
+import { cn } from "@/lib/utils"
 import { formatCurrency } from "@/lib/currency"
 import { formatDateDMY } from "@/lib/date"
 import { useMediaQuery } from "@/lib/use-media-query"
@@ -17,6 +18,7 @@ import {
   createInvoiceRecord,
   endLease,
   setInvoiceStatus,
+  updateRoomName,
   updateRoomTargetPrice,
 } from "@/app/actions/dashboard"
 import { MeterReadingSection } from "@/components/dashboard/meter-reading-section"
@@ -66,6 +68,8 @@ export function RoomDrawer({
   const [cachedRoom, setCachedRoom] = useState(room)
   const [editingPrice, setEditingPrice] = useState(false)
   const [priceInput, setPriceInput] = useState("")
+  const [editingName, setEditingName] = useState(false)
+  const [nameInput, setNameInput] = useState("")
 
   const [fullName, setFullName] = useState("")
   const [phone, setPhone] = useState("")
@@ -81,6 +85,8 @@ export function RoomDrawer({
     setCachedRoom(room)
     setEditingPrice(false)
     setPriceInput(String(room.targetPrice))
+    setEditingName(false)
+    setNameInput(room.roomNumber)
     setFullName("")
     setPhone("")
     setAgreedRent(String(room.targetPrice))
@@ -102,6 +108,22 @@ export function RoomDrawer({
       await updateRoomTargetPrice(activeRoom!.id, value)
       toast.success("Target price updated")
       setEditingPrice(false)
+    })
+  }
+
+  function handleSaveName() {
+    if (!nameInput.trim()) {
+      toast.error("Enter a valid room name")
+      return
+    }
+    startTransition(async () => {
+      const result = await updateRoomName(activeRoom!.id, nameInput)
+      if (!result.ok) {
+        toast.error(result.error)
+        return
+      }
+      toast.success("Room name updated")
+      setEditingName(false)
     })
   }
 
@@ -193,7 +215,45 @@ export function RoomDrawer({
       >
         <SheetHeader className="border-b">
           <div className="flex items-center justify-between gap-2 pr-8">
-            <SheetTitle>{activeRoom.roomNumber}</SheetTitle>
+            <div className="flex min-w-0 flex-1 items-center gap-1.5">
+              {/* Kept mounted (visually hidden while editing) so the sheet
+                  always has an accessible title element. */}
+              <SheetTitle className={cn("truncate", editingName && "sr-only")}>
+                {activeRoom.roomNumber}
+              </SheetTitle>
+              {editingName ? (
+                <>
+                  <Input
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    className="h-8 min-w-0 flex-1"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveName()
+                      if (e.key === "Escape") setEditingName(false)
+                    }}
+                  />
+                  <Button size="sm" disabled={isPending} onClick={handleSaveName}>
+                    Save
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setEditingName(false)}>
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  size="icon-xs"
+                  variant="ghost"
+                  aria-label="Edit room name"
+                  onClick={() => {
+                    setNameInput(activeRoom.roomNumber)
+                    setEditingName(true)
+                  }}
+                >
+                  <Pencil />
+                </Button>
+              )}
+            </div>
             <Badge variant={activeRoom.status === "OCCUPIED" ? "default" : "secondary"}>
               {activeRoom.status === "OCCUPIED"
                 ? t("statusOccupied")

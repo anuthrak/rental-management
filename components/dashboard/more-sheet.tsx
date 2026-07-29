@@ -1,8 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
-import { ChevronRight, HelpCircle, Languages, Moon, Sparkles, Sun } from "lucide-react"
+import { ChevronRight, HelpCircle, Languages, Moon, Sparkles, Sun, Wand2 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { LANGUAGES } from "@/lib/types"
@@ -65,12 +66,15 @@ function Switch({ checked }: { checked: boolean }) {
 
 export function MoreSheetContent({
   pageId,
+  isDemoMode = false,
   onClose,
 }: {
   pageId: TutorialPageId | null
+  isDemoMode?: boolean
   onClose: () => void
 }) {
   const { t } = useI18n()
+  const router = useRouter()
   const simpleMode = useSimpleModeStore((s) => s.simpleMode)
   const toggleSimpleMode = useSimpleModeStore((s) => s.toggle)
   const language = useInvoiceStore((s) => s.draft.language)
@@ -84,6 +88,19 @@ export function MoreSheetContent({
 
   return (
     <div className="flex flex-col gap-3 px-4 pb-12">
+      {isDemoMode && (
+        <SettingRow
+          icon={Wand2}
+          title={t("testOnboardingLabel")}
+          description={t("onboardShortcutDesc")}
+          control={<ChevronRight className="size-4 text-muted-foreground" />}
+          onClick={() => {
+            onClose()
+            router.push("/onboarding")
+          }}
+        />
+      )}
+
       <SettingRow
         icon={Sparkles}
         title={t("simpleModeLabel")}

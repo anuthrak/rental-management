@@ -42,7 +42,7 @@ function NavTab({
   )
 }
 
-export function MobileNav() {
+export function MobileNav({ isDemoMode = false }: { isDemoMode?: boolean }) {
   const { t } = useI18n()
   const pathname = usePathname()
   const [moreOpen, setMoreOpen] = useState(false)
@@ -79,7 +79,11 @@ export function MobileNav() {
           <SheetHeader>
             <SheetTitle>{t("moreSheetTitle")}</SheetTitle>
           </SheetHeader>
-          <MoreSheetContent pageId={PATH_TO_PAGE_ID[pathname] ?? null} onClose={() => setMoreOpen(false)} />
+          <MoreSheetContent
+            pageId={PATH_TO_PAGE_ID[pathname] ?? null}
+            isDemoMode={isDemoMode}
+            onClose={() => setMoreOpen(false)}
+          />
         </SheetContent>
       </Sheet>
     </>
