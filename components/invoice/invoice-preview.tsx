@@ -2,7 +2,7 @@
 
 import { useMemo } from "react"
 
-import { computeTotals, usdToKhr, withAmounts } from "@/lib/calc"
+import { computeTotals, USD_TO_KHR_RATE, usdToKhr, withAmounts } from "@/lib/calc"
 import { formatCurrency, formatKHR, formatNumber } from "@/lib/currency"
 import { formatDateDMY } from "@/lib/date"
 import { useI18n } from "@/components/i18n-provider"
@@ -146,6 +146,20 @@ export function InvoicePreview({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Utility & Currency Notes — reference-only, doesn't feed the total */}
+      <div className="mx-6 mb-6 flex flex-col gap-1 rounded-lg border border-border bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
+        <p className="mb-1 font-medium text-foreground">{t("utilityUsage")}</p>
+        <p>
+          {t("electricCostNote")}: 1 kWh = {formatCurrency(draft.electricRateUsd, "USD", locale)} (
+          {formatKHR(usdToKhr(draft.electricRateUsd))})
+        </p>
+        <p>
+          {t("waterCostNote")}: 1 m³ = {formatCurrency(draft.waterRateUsd, "USD", locale)} (
+          {formatKHR(usdToKhr(draft.waterRateUsd))})
+        </p>
+        <p>1 USD = {formatKHR(USD_TO_KHR_RATE)}</p>
       </div>
 
       {/* Footer */}

@@ -30,9 +30,9 @@ export function PageHeader({
   banner?: React.ReactNode
 }) {
   return (
-    <div className="sticky top-0 z-50 flex w-full flex-col gap-2 border-b border-border bg-background/95 pt-3 pb-2 backdrop-blur supports-backdrop-filter:bg-background/80">
+    <div className="sticky top-0 z-50 flex w-full flex-col gap-2 border-b border-border bg-background/95 pt-0 pb-2 backdrop-blur supports-backdrop-filter:bg-background/80">
       {banner}
-      <header className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+      <header className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 pt-3 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Icon className="size-5" />

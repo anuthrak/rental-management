@@ -20,6 +20,12 @@ export const lineItemSchema = z.object({
   // directly (see meterUsage below).
   previousMeter: z.number().min(0, "Must be 0 or more").optional(),
   recentMeter: z.number().min(0, "Must be 0 or more").optional(),
+  // True when previousMeter was seeded from a room's DB-backed meter
+  // reading (invoice generated from the Room Drawer) — locks the field
+  // read-only so it can't drift from the actual last reading. Standalone
+  // drafts started on /invoice leave this unset so previousMeter stays
+  // editable.
+  previousMeterLocked: z.boolean().optional(),
 })
 
 export const invoiceSchema = z

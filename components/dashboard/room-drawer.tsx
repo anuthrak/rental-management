@@ -168,6 +168,7 @@ export function RoomDrawer({
             rate: ELECTRIC_RATE_USD,
             previousMeter: lastElectric,
             recentMeter: lastElectric,
+            previousMeterLocked: true,
           }),
           newLineItem({
             label: "Water",
@@ -176,6 +177,7 @@ export function RoomDrawer({
             rate: WATER_RATE_USD,
             previousMeter: lastWater,
             recentMeter: lastWater,
+            previousMeterLocked: true,
           }),
         ],
       })
