@@ -148,6 +148,16 @@
   }
 }
 
+/* Hides the scrollbar on horizontally-scrollable strips (e.g. floor tabs)
+   while keeping the element natively scrollable via touch/trackpad/drag. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Simple Mode is purely content simplification (see the AdvancedSection
    wrapper and the simpleMode-gated UI throughout the dashboard/payments/
    invoice generator) — it never resizes chrome. Every control already

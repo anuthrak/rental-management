@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState, useTransition } from "react"
-import { Search, Share2 } from "lucide-react"
+import { Receipt, Search, Share2 } from "lucide-react"
 import { toast } from "sonner"
 
 import type { DashboardInvoice } from "@/lib/db/queries"
@@ -14,6 +14,7 @@ import { setInvoiceStatus } from "@/app/actions/dashboard"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
@@ -80,6 +81,18 @@ export function PaymentsView({ invoices }: { invoices: DashboardInvoice[] }) {
   function statusLabel(invoice: DashboardInvoice) {
     if (invoice.status === "PAID") return t("paidStatus")
     return invoice.isOverdue ? t("overdueStatus") : t("unpaidStatus")
+  }
+
+  if (invoices.length === 0) {
+    return (
+      <EmptyState
+        icon={Receipt}
+        title={t("emptyPaymentsTitle")}
+        description={t("emptyPaymentsDesc")}
+        actionLabel={t("generateInvoiceAction")}
+        actionHref="/invoice"
+      />
+    )
   }
 
   return (

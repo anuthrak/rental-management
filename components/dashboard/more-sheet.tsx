@@ -1,9 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
-import { ChevronRight, HelpCircle, Languages, Moon, Sparkles, Sun, Wand2 } from "lucide-react"
+import { ChevronRight, HelpCircle, Languages, MapPinned, Moon, Sparkles, Sun, Wand2 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { LANGUAGES } from "@/lib/types"
@@ -11,6 +11,7 @@ import { useI18n } from "@/components/i18n-provider"
 import { useInvoiceStore } from "@/store/use-invoice-store"
 import { useSimpleModeStore } from "@/store/use-simple-mode-store"
 import { useTutorialStore, type TutorialPageId } from "@/store/use-tutorial-store"
+import { useGuidedTourStore } from "@/store/use-guided-tour-store"
 
 const LANGUAGE_DISPLAY: Record<string, string> = { km: "KH" }
 
@@ -75,11 +76,13 @@ export function MoreSheetContent({
 }) {
   const { t } = useI18n()
   const router = useRouter()
+  const pathname = usePathname()
   const simpleMode = useSimpleModeStore((s) => s.simpleMode)
   const toggleSimpleMode = useSimpleModeStore((s) => s.toggle)
   const language = useInvoiceStore((s) => s.draft.language)
   const updateDraft = useInvoiceStore((s) => s.updateDraft)
   const openTutorial = useTutorialStore((s) => s.open)
+  const startTour = useGuidedTourStore((s) => s.start)
 
   const { resolvedTheme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
@@ -155,6 +158,21 @@ export function MoreSheetContent({
           }}
         />
       )}
+
+      <SettingRow
+        icon={MapPinned}
+        title={t("takeProductTourLabel")}
+        description={t("takeProductTourDesc")}
+        control={<ChevronRight className="size-4 text-muted-foreground" />}
+        onClick={() => {
+          onClose()
+          if (pathname === "/") {
+            startTour()
+          } else {
+            router.push("/?tour=1")
+          }
+        }}
+      />
     </div>
   )
 }

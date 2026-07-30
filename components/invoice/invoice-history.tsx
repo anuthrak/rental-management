@@ -11,7 +11,14 @@ import { useInvoiceStore } from "@/store/use-invoice-store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
 
 export function InvoiceHistory({
   onLoad,
@@ -45,6 +52,11 @@ export function InvoiceHistory({
           <EmptyTitle>{t("noHistory")}</EmptyTitle>
           <EmptyDescription>{t("noHistoryDesc")}</EmptyDescription>
         </EmptyHeader>
+        <EmptyContent>
+          <Button className="min-h-11 w-full" onClick={onLoad}>
+            {t("generateInvoiceAction")}
+          </Button>
+        </EmptyContent>
       </Empty>
     )
   }

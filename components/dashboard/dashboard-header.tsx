@@ -14,9 +14,10 @@ export function DashboardHeader({ banner }: { banner?: React.ReactNode }) {
       tagline={t("dashboardTagline")}
       tutorialPageId="dashboard"
       banner={banner}
+      heroTourId="welcome-hero"
       links={[
-        { href: "/payments", icon: Wallet, label: t("navPayments") },
-        { href: "/invoice", icon: Receipt, label: t("navInvoiceGenerator") },
+        { href: "/payments", icon: Wallet, label: t("navPayments"), tourId: "payment-tracking" },
+        { href: "/invoice", icon: Receipt, label: t("navInvoiceGenerator"), tourId: "invoice-generator" },
       ]}
     />
   )

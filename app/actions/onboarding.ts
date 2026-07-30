@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 
 import { prisma } from "@/lib/prisma"
 import { getSession, isDemoMode } from "@/lib/auth/session"
+import { deriveFloorFromRoomNumber } from "@/lib/rooms"
 
 export type OnboardingTenantInput = {
   roomNumber: string
@@ -73,6 +74,7 @@ export async function completeOnboarding(
         const createdRoom = await tx.room.create({
           data: {
             roomNumber: room.roomNumber,
+            floor: deriveFloorFromRoomNumber(room.roomNumber),
             targetPrice: room.targetPrice,
             status: tenantInput ? "OCCUPIED" : "VACANT",
             userId: session.userId,
@@ -121,7 +123,9 @@ export async function completeOnboarding(
     return { error: "Something went wrong finishing setup. Please try again." }
   }
 
-  redirect("/")
+  // The `tour` flag tells the dashboard's GuidedTour to auto-launch once;
+  // it's stripped from the URL immediately after the tour picks it up.
+  redirect("/?tour=1")
 }
 
 export async function skipOnboarding(): Promise<void> {

@@ -12,6 +12,7 @@ export interface PageHeaderLink {
   href: string
   icon: React.ComponentType<{ className?: string }>
   label: string
+  tourId?: string
 }
 
 export function PageHeader({
@@ -21,6 +22,7 @@ export function PageHeader({
   links,
   tutorialPageId,
   banner,
+  heroTourId,
 }: {
   icon: React.ComponentType<{ className?: string }>
   title: string
@@ -28,12 +30,13 @@ export function PageHeader({
   links?: PageHeaderLink[]
   tutorialPageId: TutorialPageId
   banner?: React.ReactNode
+  heroTourId?: string
 }) {
   return (
     <div className="sticky top-0 z-50 flex w-full flex-col gap-2 border-b border-border bg-background/95 pt-0 pb-2 backdrop-blur supports-backdrop-filter:bg-background/80">
       {banner}
       <header className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 pt-3 sm:px-6">
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3" data-tour={heroTourId}>
           <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Icon className="size-5" />
           </span>
@@ -54,6 +57,7 @@ export function PageHeader({
             <Link
               key={link.href}
               href={link.href}
+              data-tour={link.tourId}
               className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-foreground/70 hover:bg-muted hover:text-foreground"
             >
               <link.icon className="size-4" />

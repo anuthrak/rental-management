@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 
 import { prisma } from "@/lib/prisma"
 import { getSession } from "@/lib/auth/session"
+import { deriveFloorFromRoomNumber } from "@/lib/rooms"
 
 export async function updateRoomTargetPrice(roomId: string, targetPrice: number) {
   await prisma.room.update({
@@ -24,7 +25,7 @@ export async function updateRoomName(
   try {
     await prisma.room.update({
       where: { id: roomId },
-      data: { roomNumber: trimmed },
+      data: { roomNumber: trimmed, floor: deriveFloorFromRoomNumber(trimmed) },
     })
   } catch {
     // Most likely the @@unique([userId, roomNumber]) constraint — another
@@ -116,6 +117,7 @@ export async function createRoom(
     await prisma.room.create({
       data: {
         roomNumber: input.roomNumber,
+        floor: deriveFloorFromRoomNumber(input.roomNumber),
         targetPrice: input.targetPrice,
         status: "VACANT",
         userId: session?.userId ?? null,

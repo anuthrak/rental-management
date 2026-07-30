@@ -15,7 +15,10 @@ export function LanguageToggle() {
   const updateDraft = useInvoiceStore((s) => s.updateDraft)
 
   return (
-    <div className="flex min-h-11 items-center gap-1 rounded-lg border border-border bg-card p-1">
+    <div
+      data-tour="language-toggle"
+      className="flex min-h-11 items-center gap-1 rounded-lg border border-border bg-card p-1"
+    >
       <Languages className="ml-1 size-4 text-muted-foreground" aria-hidden />
       {LANGUAGES.map((lng) => (
         <button

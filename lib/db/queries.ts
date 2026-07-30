@@ -38,6 +38,11 @@ export type MeterReadingItem = {
 export type DashboardRoom = {
   id: string
   roomNumber: string
+  floor: number
+  wing: string | null
+  position: number
+  isVip: boolean
+  stairAfter: boolean
   targetPrice: number
   status: RoomStatus
   lease: { id: string; agreedRent: number } | null
@@ -68,6 +73,11 @@ export async function getRooms(userId?: string | null): Promise<DashboardRoom[]>
     return {
       id: room.id,
       roomNumber: room.roomNumber,
+      floor: room.floor,
+      wing: room.wing,
+      position: room.position,
+      isVip: room.isVip,
+      stairAfter: room.stairAfter,
       targetPrice: room.targetPrice.toNumber(),
       status: room.status,
       lease: lease ? { id: lease.id, agreedRent: lease.agreedRent.toNumber() } : null,
@@ -95,6 +105,12 @@ export async function getRooms(userId?: string | null): Promise<DashboardRoom[]>
       })),
     }
   })
+}
+
+// Distinct floors present across a room set, ascending — drives the floor
+// navigation tabs without a separate DB round trip.
+export function getFloors(rooms: DashboardRoom[]): number[] {
+  return [...new Set(rooms.map((room) => room.floor))].sort((a, b) => a - b)
 }
 
 export type DashboardInvoice = {

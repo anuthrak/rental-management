@@ -18,9 +18,19 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 
-export function AddRoomCard() {
+export function AddRoomCard({
+  open: openProp,
+  onOpenChange: onOpenChangeProp,
+  hideTrigger = false,
+}: {
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  hideTrigger?: boolean
+} = {}) {
   const { t } = useI18n()
-  const [open, setOpen] = useState(false)
+  const [openState, setOpenState] = useState(false)
+  const open = openProp ?? openState
+  const setOpen = onOpenChangeProp ?? setOpenState
   const [roomNumber, setRoomNumber] = useState("")
   const [targetPrice, setTargetPrice] = useState("")
   const [isPending, startTransition] = useTransition()
@@ -47,14 +57,16 @@ export function AddRoomCard() {
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="text-left">
-        <Card className="h-full border-dashed transition-shadow hover:shadow-md">
-          <CardContent className="flex h-full flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
-            <Plus className="size-5" />
-            <span className="text-sm font-medium">{t("addRoom")}</span>
-          </CardContent>
-        </Card>
-      </button>
+      {!hideTrigger && (
+        <button type="button" onClick={() => setOpen(true)} className="text-left">
+          <Card className="h-full border-dashed transition-shadow hover:shadow-md">
+            <CardContent className="flex h-full flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
+              <Plus className="size-5" />
+              <span className="text-sm font-medium">{t("addRoom")}</span>
+            </CardContent>
+          </Card>
+        </button>
+      )}
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent className="data-[side=right]:w-full sm:data-[side=right]:w-3/4">

@@ -7,8 +7,10 @@ import { I18nProvider } from '@/components/i18n-provider'
 import { SimpleModeEffect } from '@/components/simple-mode-effect'
 import { MobileNav } from '@/components/mobile-nav'
 import { TutorialSheet } from '@/components/tutorial-sheet'
+import { GuidedTour } from '@/components/tutorial/guided-tour'
 import { Toaster } from '@/components/ui/sonner'
-import { isDemoMode } from '@/lib/auth/session'
+import { prisma } from '@/lib/prisma'
+import { getSession, isDemoMode } from '@/lib/auth/session'
 import './globals.css'
 
 const inter = Inter({
@@ -43,7 +45,15 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const demoMode = await isDemoMode()
+  const [demoMode, session] = await Promise.all([isDemoMode(), getSession()])
+  let tourCompleted = false
+  if (session) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { tourCompleted: true },
+    })
+    tourCompleted = user?.tourCompleted ?? false
+  }
 
   return (
     <html
@@ -63,6 +73,7 @@ export default async function RootLayout({
             <div className="flex flex-1 flex-col pb-mobile-nav">{children}</div>
             <MobileNav isDemoMode={demoMode} />
             <TutorialSheet />
+            <GuidedTour isDemoMode={demoMode} initialTourCompleted={tourCompleted} />
             <Toaster richColors position="top-center" />
           </I18nProvider>
         </ThemeProvider>

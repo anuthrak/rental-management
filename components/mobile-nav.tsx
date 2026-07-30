@@ -22,15 +22,18 @@ function NavTab({
   icon: Icon,
   label,
   active,
+  tourId,
 }: {
   href: string
   icon: React.ComponentType<{ className?: string }>
   label: string
   active: boolean
+  tourId?: string
 }) {
   return (
     <Link
       href={href}
+      data-tour={tourId}
       className={cn(
         "flex min-h-11 flex-1 flex-col items-center justify-center gap-1 rounded-lg py-1 text-[11px] font-medium transition-transform active:scale-95",
         active ? "text-primary" : "text-muted-foreground",
@@ -61,9 +64,27 @@ export function MobileNav({ isDemoMode = false }: { isDemoMode?: boolean }) {
           paddingBottom: "max(env(safe-area-inset-bottom), 1.25rem)",
         }}
       >
-        <NavTab href="/" icon={Building2} label={t("navDashboard")} active={pathname === "/"} />
-        <NavTab href="/payments" icon={Wallet} label={t("navPayments")} active={pathname === "/payments"} />
-        <NavTab href="/invoice" icon={Receipt} label={t("navInvoiceShort")} active={pathname === "/invoice"} />
+        <NavTab
+          href="/"
+          icon={Building2}
+          label={t("navDashboard")}
+          active={pathname === "/"}
+          tourId="welcome-hero"
+        />
+        <NavTab
+          href="/payments"
+          icon={Wallet}
+          label={t("navPayments")}
+          active={pathname === "/payments"}
+          tourId="payment-tracking"
+        />
+        <NavTab
+          href="/invoice"
+          icon={Receipt}
+          label={t("navInvoiceShort")}
+          active={pathname === "/invoice"}
+          tourId="invoice-generator"
+        />
         <button
           type="button"
           onClick={() => setMoreOpen(true)}

@@ -42,6 +42,7 @@ model User {
   defaultWaterRate    Decimal  @default(0.5)
   defaultElectricRate Decimal  @default(0.25)
   invoiceNoteTemplate String?
+  tourCompleted       Boolean  @default(false)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
@@ -57,6 +58,17 @@ model User {
 model Room {
   id          String     @id @default(cuid())
   roomNumber  String
+  floor       Int        @default(1)
+  // Architectural placement for the U-shaped floor plan view (left_wing,
+  // top_wing, right_wing, bottom_facade); null for rooms with no sketch-based
+  // layout, which fall back to the flat cinema grid.
+  wing        String?
+  // Render order within a floor+wing stack (top-to-bottom / left-to-right).
+  position    Int        @default(0)
+  isVip       Boolean    @default(false)
+  // Renders a stairwell hatch divider immediately after this room in its
+  // wing's stack, matching a stairwell drawn between rooms on the sketch.
+  stairAfter  Boolean    @default(false)
   targetPrice Decimal
   status      RoomStatus @default(VACANT)
   userId      String?
