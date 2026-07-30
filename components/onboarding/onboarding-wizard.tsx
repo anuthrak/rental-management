@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useTransition } from "react"
+import { useEffect, useMemo, useTransition } from "react"
 import { toast } from "sonner"
 
 import { resolveRooms, useOnboardingStore } from "@/store/use-onboarding-store"
@@ -16,7 +16,8 @@ import { StepPreferences } from "@/components/onboarding/step-preferences"
 import { StepSummary } from "@/components/onboarding/step-summary"
 
 export function OnboardingWizard() {
-  const { t } = useI18n()
+  const { t, language } = useI18n()
+  const syncInvoiceNoteLanguage = useOnboardingStore((s) => s.syncInvoiceNoteLanguage)
   const step = useOnboardingStore((s) => s.step)
   const setStep = useOnboardingStore((s) => s.setStep)
   const propertyName = useOnboardingStore((s) => s.propertyName)
@@ -50,6 +51,13 @@ export function OnboardingWizard() {
   const waterRate = useOnboardingStore((s) => s.waterRate)
   const electricRate = useOnboardingStore((s) => s.electricRate)
   const invoiceNoteTemplate = useOnboardingStore((s) => s.invoiceNoteTemplate)
+
+  // Keep the note template's default T&Cs in whichever language Step 0
+  // picked — but only until the user edits it by hand (see
+  // syncInvoiceNoteLanguage in the onboarding store).
+  useEffect(() => {
+    syncInvoiceNoteLanguage(language)
+  }, [language, syncInvoiceNoteLanguage])
 
   const [isPending, startTransition] = useTransition()
 

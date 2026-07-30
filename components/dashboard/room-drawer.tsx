@@ -7,6 +7,7 @@ import { toast } from "sonner"
 
 import type { DashboardRoom } from "@/lib/db/queries"
 import { ELECTRIC_RATE_USD, WATER_RATE_USD } from "@/lib/calc"
+import { DEFAULT_INVOICE_CATEGORIES, categoryLabel, defaultCategoryLineItem } from "@/lib/categories"
 import { cn } from "@/lib/utils"
 import { formatCurrency } from "@/lib/currency"
 import { formatDateDMY } from "@/lib/date"
@@ -61,7 +62,7 @@ export function RoomDrawer({
   onOpenChange: (open: boolean) => void
 }) {
   const router = useRouter()
-  const { t } = useI18n()
+  const { t, language } = useI18n()
   const [isPending, startTransition] = useTransition()
   const isDesktop = useMediaQuery("(min-width: 640px)")
 
@@ -178,30 +179,47 @@ export function RoomDrawer({
       const lastElectric = latestReading?.electricMeterValue ?? 0
       const store = useInvoiceStore.getState()
       store.resetDraft()
+      // Preload every default category, not just Room Rate/Electricity/Water
+      // — Deposit/Waste/Sanitation/WiFi/Security Fee come from the same
+      // canonical list (lib/categories.ts) so the tenant doesn't have to
+      // quick-add them by hand; Room Rate/Electricity/Water stay
+      // special-cased here since their rate/meter values come from the room.
       store.updateDraft({
         roomNumber: activeRoom!.roomNumber,
         guestName: activeRoom!.tenant!.fullName,
-        lineItems: [
-          newLineItem({ label: "Monthly Rent", quantity: 1, unit: "month", rate: amount }),
-          newLineItem({
-            label: "Electricity",
-            quantity: 0,
-            unit: "kW",
-            rate: ELECTRIC_RATE_USD,
-            previousMeter: lastElectric,
-            recentMeter: lastElectric,
-            previousMeterLocked: true,
-          }),
-          newLineItem({
-            label: "Water",
-            quantity: 0,
-            unit: "m³",
-            rate: WATER_RATE_USD,
-            previousMeter: lastWater,
-            recentMeter: lastWater,
-            previousMeterLocked: true,
-          }),
-        ],
+        lineItems: DEFAULT_INVOICE_CATEGORIES.map((category) => {
+          if (category.id === "roomRate") {
+            return newLineItem({
+              label: categoryLabel("roomRate", language),
+              quantity: 1,
+              unit: "month",
+              rate: amount,
+            })
+          }
+          if (category.id === "electricity") {
+            return newLineItem({
+              label: categoryLabel("electricity", language),
+              quantity: 0,
+              unit: "kW",
+              rate: ELECTRIC_RATE_USD,
+              previousMeter: lastElectric,
+              recentMeter: lastElectric,
+              previousMeterLocked: true,
+            })
+          }
+          if (category.id === "water") {
+            return newLineItem({
+              label: categoryLabel("water", language),
+              quantity: 0,
+              unit: "m³",
+              rate: WATER_RATE_USD,
+              previousMeter: lastWater,
+              recentMeter: lastWater,
+              previousMeterLocked: true,
+            })
+          }
+          return newLineItem(defaultCategoryLineItem(category, language))
+        }),
       })
       router.push("/invoice")
     })

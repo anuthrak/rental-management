@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(vercel alias *)"
+      "Bash(vercel alias *)",
+      "Bash(rm -f \"C:\\\\Users\\\\Anuthrak\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Anuthrak-OneDrive-Documents-GitHub-rental-management\\\\1efa4f71-4e6c-4182-a9b3-7d2b4665ffac\\\\scratchpad\\\\migrate_token.txt\")"
     ]
   }
 }

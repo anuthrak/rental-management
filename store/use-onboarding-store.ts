@@ -2,6 +2,9 @@
 
 import { create } from "zustand"
 
+import { DEFAULT_INVOICE_NOTES } from "@/lib/invoice-notes"
+import type { Language } from "@/lib/types"
+
 export type PricingModel = "standard" | "custom"
 export type SecurityDepositStatus = "HELD" | "REFUNDED" | "APPLIED_TO_RENT"
 export type OnboardingCurrency = "USD" | "KHR"
@@ -43,11 +46,6 @@ export const DEFAULT_STANDARD_ROOM_COUNT = 20
 export const DEFAULT_STANDARD_BASE_RATE = 800
 export const DEFAULT_WATER_RATE = 0.5
 export const DEFAULT_ELECTRIC_RATE = 0.25
-export const DEFAULT_INVOICE_NOTE_TEMPLATE = [
-  "Payment is due within 7 days of the invoice date.",
-  "Late payments may incur an additional fee.",
-  "Thank you for being a valued tenant.",
-].join("\n")
 
 export function createTenantDraft(roomId: string, agreedRent = 0): OnboardingTenant {
   return {
@@ -103,6 +101,10 @@ interface OnboardingState {
   waterRate: number
   electricRate: number
   invoiceNoteTemplate: string
+  // False until the user edits the note template by hand — lets the
+  // language step keep swapping in the localized default T&Cs without
+  // clobbering a customization once one exists.
+  invoiceNoteTouched: boolean
 
   setStep: (step: number) => void
   setPropertyName: (name: string) => void
@@ -121,6 +123,7 @@ interface OnboardingState {
   setWaterRate: (rate: number) => void
   setElectricRate: (rate: number) => void
   setInvoiceNoteTemplate: (note: string) => void
+  syncInvoiceNoteLanguage: (language: Language) => void
   reset: () => void
 }
 
@@ -137,7 +140,8 @@ const initialState = {
   currency: "USD" as OnboardingCurrency,
   waterRate: DEFAULT_WATER_RATE,
   electricRate: DEFAULT_ELECTRIC_RATE,
-  invoiceNoteTemplate: DEFAULT_INVOICE_NOTE_TEMPLATE,
+  invoiceNoteTemplate: DEFAULT_INVOICE_NOTES.en,
+  invoiceNoteTouched: false,
 }
 
 export const useOnboardingStore = create<OnboardingState>()((set) => ({
@@ -198,7 +202,13 @@ export const useOnboardingStore = create<OnboardingState>()((set) => ({
   setCurrency: (currency) => set({ currency }),
   setWaterRate: (rate) => set({ waterRate: Math.max(0, rate || 0) }),
   setElectricRate: (rate) => set({ electricRate: Math.max(0, rate || 0) }),
-  setInvoiceNoteTemplate: (invoiceNoteTemplate) => set({ invoiceNoteTemplate }),
+  setInvoiceNoteTemplate: (invoiceNoteTemplate) =>
+    set({ invoiceNoteTemplate, invoiceNoteTouched: true }),
+
+  syncInvoiceNoteLanguage: (language) =>
+    set((s) =>
+      s.invoiceNoteTouched ? s : { invoiceNoteTemplate: DEFAULT_INVOICE_NOTES[language] },
+    ),
 
   reset: () => set(initialState),
 }))

@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ArrowLeft, Building2, Receipt } from "lucide-react"
 
 import { useI18n } from "@/components/i18n-provider"
@@ -14,13 +14,32 @@ import { cn } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 
-export function Dashboard({ banner }: { banner?: React.ReactNode }) {
+export function Dashboard({
+  banner,
+  accountNoteTemplate,
+}: {
+  banner?: React.ReactNode
+  // The signed-in account's saved invoice note template (null in demo mode
+  // or if the account hasn't saved one) — fetched server-side in
+  // app/invoice/page.tsx and applied post-hydration below.
+  accountNoteTemplate?: string | null
+}) {
   const { t } = useI18n()
   const simpleMode = useSimpleModeStore((s) => s.simpleMode)
   const hasHydrated = useInvoiceStore((s) => s.hasHydrated)
   const savedCount = useInvoiceStore((s) => s.savedInvoices.length)
+  const applyAccountNoteTemplate = useInvoiceStore((s) => s.applyAccountNoteTemplate)
   const previewRef = useRef<HTMLDivElement | null>(null)
   const [tab, setTab] = useState("preview")
+
+  // Runs on every mount, but applyAccountNoteTemplate only ever overwrites
+  // notes that still match a built-in stock default — so this can't clobber
+  // text the user actually typed into a draft.
+  useEffect(() => {
+    if (hasHydrated && accountNoteTemplate) {
+      applyAccountNoteTemplate(accountNoteTemplate)
+    }
+  }, [hasHydrated, accountNoteTemplate, applyAccountNoteTemplate])
 
   return (
     <>

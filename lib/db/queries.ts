@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import type { InvoiceStatus, RoomStatus } from "@prisma/client"
-import type { Currency } from "@/lib/types"
+import { DEFAULT_INVOICE_NOTES } from "@/lib/invoice-notes"
+import type { Currency, Language } from "@/lib/types"
 
 // A NULL userId is the shared public demo dataset; a specific userId scopes
 // to that registered account's own rows. Pass this into a query's `where`.
@@ -17,6 +18,35 @@ export async function getUserCurrencyPreference(userId: string | null): Promise<
     select: { currencyPreference: true },
   })
   return (user?.currencyPreference as Currency) ?? "USD"
+}
+
+// User.invoiceNoteTemplate stays NULL until an account explicitly saves one
+// (via onboarding or the future settings page). Returns the raw value —
+// null means "nothing saved yet" — so callers can tell that apart from a
+// saved template that happens to match a default's text. Used by the
+// invoice generator to decide whether it's safe to apply the account's
+// template over the client's local draft (see applyAccountNoteTemplate in
+// store/use-invoice-store.ts).
+export async function getUserInvoiceNoteTemplateRaw(userId: string | null): Promise<string | null> {
+  if (!userId) return null
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { invoiceNoteTemplate: true },
+  })
+  return user?.invoiceNoteTemplate ?? null
+}
+
+// Same fallback semantics as getUserInvoiceNoteTemplateRaw, but always
+// resolves to a renderable string — coalesces to the localized default T&Cs
+// (lib/invoice-notes.ts) without ever writing that fallback back to the
+// row, so a real customization is never overwritten and an existing
+// NULL-valued account picks up updated default copy for free the next time
+// this is read.
+export async function getUserInvoiceNoteTemplate(
+  userId: string | null,
+  language: Language,
+): Promise<string> {
+  return (await getUserInvoiceNoteTemplateRaw(userId)) ?? DEFAULT_INVOICE_NOTES[language]
 }
 
 export type RoomInvoice = {

@@ -22,6 +22,7 @@ import { GripVertical, Plus, ShieldCheck, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { UNITS, type Currency, type LineItem, type Unit } from "@/lib/types"
 import type { TranslationKey } from "@/lib/i18n"
+import { DEFAULT_INVOICE_CATEGORIES } from "@/lib/categories"
 import { lineAmount, SECURITY_FEE_ID } from "@/lib/calc"
 import { formatCurrency, formatNumber } from "@/lib/currency"
 import { useI18n } from "@/components/i18n-provider"
@@ -57,14 +58,11 @@ export function LineItemTable() {
 
   const hasSecurityFee = lineItems.some((item) => item.id === SECURITY_FEE_ID)
 
-  const presets: Preset[] = [
-    { key: "presetRoom", label: t("presetRoom"), unit: "month" },
-    { key: "presetWater", label: t("presetWater"), unit: "m³" },
-    { key: "presetElectricity", label: t("presetElectricity"), unit: "kW" },
-    { key: "presetWaste", label: t("presetWaste"), unit: "unit" },
-    { key: "presetSanitation", label: t("presetSanitation"), unit: "unit" },
-    { key: "presetWifi", label: t("presetWifi"), unit: "month" },
-  ]
+  // Security Fee is rendered as its own flat-fee toggle below rather than a
+  // quantity × rate quick-add preset — excluded here for that reason.
+  const presets: Preset[] = DEFAULT_INVOICE_CATEGORIES.filter((c) => !c.isFlatFee).map(
+    (c) => ({ key: c.id, label: t(c.translationKey), unit: c.unit }),
+  )
 
   // Pointer (mouse/trackpad) drags start after a small move so a plain click
   // still works; touch drags wait for a brief press-and-hold so a quick

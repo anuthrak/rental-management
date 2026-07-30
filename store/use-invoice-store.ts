@@ -3,9 +3,11 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
-import type { Currency, Invoice, LineItem, Unit } from "@/lib/types"
+import type { Currency, Invoice, Language, LineItem, Unit } from "@/lib/types"
 import { invoiceSchema, meterUsage } from "@/lib/types"
 import { formatInvoiceNumber, nextInvoiceNumber } from "@/lib/invoice-number"
+import { DEFAULT_INVOICE_CATEGORIES, defaultCategoryLineItem } from "@/lib/categories"
+import { DEFAULT_INVOICE_NOTES } from "@/lib/invoice-notes"
 import {
   ELECTRIC_RATE_USD,
   SECURITY_FEE_AMOUNT,
@@ -20,14 +22,6 @@ import {
 function scaledRate(rateUsd: number, currency: Currency): number {
   return currency === "KHR" ? usdToKhr(rateUsd) : rateUsd
 }
-
-const NOTES_PLACEHOLDER = [
-  "Payment is due within 7 days of the invoice date.",
-  "Late payments may incur an additional fee.",
-  "Please make checks payable to the business name above.",
-  "For questions about this invoice, contact the office.",
-  "Thank you for being a valued tenant.",
-].join("\n")
 
 function uid(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -58,32 +52,20 @@ export function newLineItem(partial?: Partial<LineItem>): LineItem {
   }
 }
 
-// Every new draft starts with these three default categories so the user
-// isn't staring at an empty table — quick-add below can still re-add any of
-// them if deleted, or add extras.
-function defaultLineItems(): LineItem[] {
-  return [
-    newLineItem({ label: "Room rate", quantity: 1, unit: "month", rate: 0 }),
-    newLineItem({
-      label: "Electricity",
-      quantity: 0,
-      unit: "kW",
-      rate: ELECTRIC_RATE_USD,
-      previousMeter: 0,
-      recentMeter: 0,
-    }),
-    newLineItem({
-      label: "Water",
-      quantity: 0,
-      unit: "m³",
-      rate: WATER_RATE_USD,
-      previousMeter: 0,
-      recentMeter: 0,
-    }),
-  ]
+// Every new draft starts pre-loaded with the full default category set
+// (Room Rate, Deposit, Water, Electricity, Waste, Sanitation, WiFi, Security
+// Fee) so the user doesn't have to click quick-add for any of them — they
+// can still delete a row they don't need, and quick-add remains there to
+// re-add it or add extras. Sourced from the canonical category list
+// (lib/categories.ts) so labels/units/rates stay in sync with the quick-add
+// presets in LineItemTable and the room-drawer's generate-invoice flow.
+function defaultLineItems(language: Language): LineItem[] {
+  return DEFAULT_INVOICE_CATEGORIES.map((category) =>
+    newLineItem(defaultCategoryLineItem(category, language)),
+  )
 }
 
-function makeDraft(invoiceNumber = formatInvoiceNumber(1)): Draft {
+function makeDraft(invoiceNumber = formatInvoiceNumber(1), language: Language = "en"): Draft {
   return {
     id: uid(),
     invoiceNumber,
@@ -95,9 +77,9 @@ function makeDraft(invoiceNumber = formatInvoiceNumber(1)): Draft {
     dateIn: firstOfMonth(),
     dateOut: today(),
     currency: "USD",
-    language: "en",
-    lineItems: defaultLineItems(),
-    notes: NOTES_PLACEHOLDER,
+    language,
+    lineItems: defaultLineItems(language),
+    notes: DEFAULT_INVOICE_NOTES[language],
     waterRateUsd: WATER_RATE_USD,
     electricRateUsd: ELECTRIC_RATE_USD,
   }
@@ -117,6 +99,7 @@ interface InvoiceState {
   removeLineItem: (id: string) => void
   moveLineItem: (fromIndex: number, toIndex: number) => void
   toggleSecurityFee: (label: string) => void
+  applyAccountNoteTemplate: (template: string) => void
   resetDraft: () => void
   saveInvoice: () => Invoice
   loadInvoice: (id: string) => void
@@ -251,10 +234,21 @@ export const useInvoiceStore = create<InvoiceState>()(
             },
           }
         }),
+      // Called once the invoice page knows the signed-in account's saved
+      // note template (fetched server-side — see app/invoice/page.tsx).
+      // Only applies it while the draft's notes still match one of the
+      // built-in stock defaults, so it can safely run on every mount
+      // without ever overwriting text the user actually typed.
+      applyAccountNoteTemplate: (template) =>
+        set((s) => {
+          const isStockDefault = Object.values(DEFAULT_INVOICE_NOTES).includes(s.draft.notes)
+          if (!isStockDefault || s.draft.notes === template) return s
+          return { draft: { ...s.draft, notes: template } }
+        }),
       resetDraft: () =>
         set((s) => ({
           draft: {
-            ...makeDraft(nextInvoiceNumber(s.savedInvoices)),
+            ...makeDraft(nextInvoiceNumber(s.savedInvoices), s.draft.language),
             currency: s.draft.currency,
             language: s.draft.language,
             companyName: s.draft.companyName,
@@ -272,7 +266,7 @@ export const useInvoiceStore = create<InvoiceState>()(
         set({
           savedInvoices: nextSaved,
           draft: {
-            ...makeDraft(nextInvoiceNumber(nextSaved)),
+            ...makeDraft(nextInvoiceNumber(nextSaved), draft.language),
             currency: draft.currency,
             language: draft.language,
             companyName: draft.companyName,
@@ -289,7 +283,7 @@ export const useInvoiceStore = create<InvoiceState>()(
           // Backfill fields added after this invoice was saved (e.g. an
           // older record predating utility rates) so inputs never mount
           // with an undefined value.
-          return { draft: { ...makeDraft(), ...rest } }
+          return { draft: { ...makeDraft(undefined, found.language), ...rest } }
         }),
       deleteInvoice: (id) =>
         set((s) => ({

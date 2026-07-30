@@ -103,14 +103,10 @@ export function InvoicePreview({
               >
                 <div className="flex flex-col">
                   <span className="font-medium">{item.label || "—"}</span>
-                  <span className="text-xs text-muted-foreground tabular-nums">
-                    {formatNumber(item.quantity, locale)} {item.unit} ×{" "}
-                    {formatCurrency(item.rate, draft.currency, locale)}
-                  </span>
                   {isUtilityItem && hasMeterData && (
                     <span className="text-xs text-muted-foreground tabular-nums">
-                      {utilityLabel}: ({formatNumber(item.recentMeter!, locale)} −{" "}
-                      {formatNumber(item.previousMeter!, locale)}) {formulaUnit} ×{" "}
+                      ({formatNumber(item.recentMeter!, locale)} −{" "}
+                      {formatNumber(item.previousMeter!, locale)}) {formatNumber(item.quantity, locale)} {formulaUnit} ×{" "}
                       {formatCurrency(item.rate, draft.currency, locale)}/{formulaUnit} ={" "}
                       {formatCurrency(item.amount, draft.currency, locale)}
                     </span>
