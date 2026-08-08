@@ -263,16 +263,10 @@ export const useInvoiceStore = create<InvoiceState>()(
           existingIndex >= 0
             ? savedInvoices.map((i, idx) => (idx === existingIndex ? saved : i))
             : [saved, ...savedInvoices]
-        set({
-          savedInvoices: nextSaved,
-          draft: {
-            ...makeDraft(nextInvoiceNumber(nextSaved), draft.language),
-            currency: draft.currency,
-            language: draft.language,
-            companyName: draft.companyName,
-            companyAddress: draft.companyAddress,
-          },
-        })
+        // Keep the draft on-screen after saving/sharing (e.g. so the user can
+        // export or share right after) — the draft only clears when the user
+        // explicitly hits Reset.
+        set({ savedInvoices: nextSaved })
         return saved
       },
       loadInvoice: (id) =>

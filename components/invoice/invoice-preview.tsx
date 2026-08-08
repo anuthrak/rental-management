@@ -28,18 +28,27 @@ export function InvoicePreview({
     >
       {/* Header band */}
       <div className="relative flex items-start justify-between gap-4 bg-primary p-6 pt-16 text-primary-foreground">
-        <div className="flex flex-col gap-1">
-          <span className="text-xs uppercase tracking-wide text-primary-foreground/70">
-            {t("invoiceWord")}
-          </span>
-          <h2 className="font-heading text-xl font-semibold leading-tight text-balance">
-            {draft.companyName || t("companyName")}
-          </h2>
-          {draft.companyAddress && (
-            <p className="max-w-[16rem] text-sm text-primary-foreground/80">
-              {draft.companyAddress}
-            </p>
-          )}
+        <div className="flex items-start">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo/stamp-white.png"
+            alt=""
+            aria-hidden
+            className="h-28 w-28 shrink-0 object-contain -translate-y-3"
+          />
+          <div className="flex flex-col gap-1">
+            <span className="text-xs uppercase tracking-wide text-primary-foreground/70">
+              {t("invoiceWord")}
+            </span>
+            <h2 className="font-heading text-xl font-semibold leading-tight text-balance">
+              {draft.companyName || t("companyName")}
+            </h2>
+            {draft.companyAddress && (
+              <p className="max-w-[16rem] text-sm text-primary-foreground/80">
+                {draft.companyAddress}
+              </p>
+            )}
+          </div>
         </div>
         <div className="rounded-lg bg-primary-foreground/15 px-3 py-1.5 text-right">
           <span className="font-heading text-lg font-semibold tabular-nums">
@@ -144,18 +153,34 @@ export function InvoicePreview({
         </div>
       </div>
 
-      {/* Utility & Currency Notes — reference-only, doesn't feed the total */}
-      <div className="mx-6 mb-6 flex flex-col gap-1 rounded-lg border border-border bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
-        <p className="mb-1 font-medium text-foreground">{t("utilityUsage")}</p>
-        <p>
-          {t("electricCostNote")}: 1 kWh = {formatCurrency(draft.electricRateUsd, "USD", locale)} (
-          {formatKHR(usdToKhr(draft.electricRateUsd))})
-        </p>
-        <p>
-          {t("waterCostNote")}: 1 m³ = {formatCurrency(draft.waterRateUsd, "USD", locale)} (
-          {formatKHR(usdToKhr(draft.waterRateUsd))})
-        </p>
-        <p>1 USD = {formatKHR(USD_TO_KHR_RATE)}</p>
+      {/* Utility & Currency Notes (left) + Owner stamp, sat under the Total (right) */}
+      <div className="mx-6 mb-6 grid grid-cols-2 items-start gap-4">
+        <div className="flex flex-col gap-1 rounded-lg border border-border bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
+          <p className="mb-1 font-medium text-foreground">{t("utilityUsage")}</p>
+          <p>
+            {t("electricCostNote")}: 1 kWh = {formatCurrency(draft.electricRateUsd, "USD", locale)} (
+            {formatKHR(usdToKhr(draft.electricRateUsd))})
+          </p>
+          <p>
+            {t("waterCostNote")}: 1 m³ = {formatCurrency(draft.waterRateUsd, "USD", locale)} (
+            {formatKHR(usdToKhr(draft.waterRateUsd))})
+          </p>
+          <p>1 USD = {formatKHR(USD_TO_KHR_RATE)}</p>
+        </div>
+
+        <div className="flex flex-col items-center justify-self-end translate-x-10">
+          <span className="text-[20px] font-large tracking-wide uppercase">
+            {t("ownerLabel")}
+          </span>
+          <div className="flex h-24 w-48 items-center justify-center" aria-hidden>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo/stamp-transparent.png"
+              alt=""
+              className="max-h-full max-w-full object-contain"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Footer */}
@@ -166,22 +191,7 @@ export function InvoicePreview({
             <p className="whitespace-pre-line">{draft.notes}</p>
           </div>
         )}
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-xs text-muted-foreground">{t("thankYou")}</p>
-          <div className="flex shrink-0 translate-x-10 -translate-y-8 flex-col items-center">
-            <span className="text-[14px] text-bold font-large tracking-wide text-muted-foreground uppercase">
-              {t("ownerLabel")}
-            </span>
-            <div className="flex h-24 w-48 items-center justify-center" aria-hidden>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/logo/stamp-transparent.png"
-                alt=""
-                className="max-h-full max-w-full object-contain"
-              />
-            </div>
-          </div>
-        </div>
+        <p className="text-xs text-muted-foreground">{t("thankYou")}</p>
       </div>
     </div>
   )

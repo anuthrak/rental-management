@@ -30,6 +30,10 @@ export const metadata: Metadata = {
   description:
     'Create itemized rent and utility invoices for tenants, preview them live, save your history, and export to PDF or image.',
   generator: 'v0.app',
+  icons: {
+    icon: '/logo/socheatta-app-icon-32.png',
+    apple: '/logo/socheatta-app-icon-180.png',
+  },
 }
 
 export const viewport: Viewport = {

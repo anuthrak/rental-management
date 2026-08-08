@@ -15,6 +15,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { EmptyState } from "@/components/ui/empty-state"
 import { AddRoomCard } from "@/components/dashboard/add-room-card"
 import { FloorPlanGrid } from "@/components/dashboard/floor-plan-grid"
+import { FloorPlanGridBoard } from "@/components/dashboard/floor-plan-grid-board"
+import { GridLayoutSetupModal } from "@/components/dashboard/grid-layout-setup-modal"
 import { NeedsAttentionView } from "@/components/dashboard/needs-attention-view"
 import { RoomCard } from "@/components/dashboard/room-card"
 import { RoomCinemaGrid } from "@/components/dashboard/room-cinema-grid"
@@ -22,7 +24,7 @@ import { RoomDrawer } from "@/components/dashboard/room-drawer"
 
 type FilterTab = "all" | "vacant" | "occupied"
 type MainTab = "attention" | "all"
-type ViewMode = "standard" | "grid"
+type ViewMode = "standard" | "grid" | "custom"
 type FloorFilter = number | "all"
 
 // Ground floor is conventionally "GF" rather than "Floor 0"; upper floors
@@ -142,11 +144,19 @@ export function RoomGrid({ rooms, currency }: { rooms: DashboardRoom[]; currency
               <TabsList>
                 <TabsTrigger value="standard">{t("standardViewLabel")}</TabsTrigger>
                 <TabsTrigger value="grid">{t("gridViewLabel")}</TabsTrigger>
+                <TabsTrigger value="custom">{t("customLayoutViewLabel")}</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
 
-          {viewMode === "grid" ? (
+          {viewMode === "custom" ? (
+            <div className="flex flex-col gap-3">
+              <div className="flex justify-end">
+                <GridLayoutSetupModal />
+              </div>
+              <FloorPlanGridBoard rooms={floorRooms} onOpenRoom={setSelectedRoomId} />
+            </div>
+          ) : viewMode === "grid" ? (
             selectedFloor !== "all" && floorRooms.some((room) => room.wing) ? (
               <FloorPlanGrid
                 rooms={floorRooms}

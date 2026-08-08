@@ -1,7 +1,29 @@
 import { toPng } from "html-to-image"
 import { jsPDF } from "jspdf"
 
+// html-to-image snapshots the DOM synchronously, so any <img> that hasn't
+// finished decoding yet (e.g. the stamp logo) gets silently dropped from
+// the output. Wait for every image in the node to be fully decoded first.
+async function waitForImages(node: HTMLElement): Promise<void> {
+  const images = Array.from(node.querySelectorAll("img"))
+  await Promise.all(
+    images.map((img) => {
+      if (img.complete && img.naturalWidth > 0) return Promise.resolve()
+      return img
+        .decode()
+        .catch(
+          () =>
+            new Promise<void>((resolve) => {
+              img.onload = () => resolve()
+              img.onerror = () => resolve()
+            }),
+        )
+    }),
+  )
+}
+
 async function nodeToPng(node: HTMLElement): Promise<string> {
+  await waitForImages(node)
   // Render at 2x for crisp output. Use the resolved background so the
   // exported image isn't transparent.
   const bg = getComputedStyle(document.body).backgroundColor || "#ffffff"
@@ -64,11 +86,9 @@ export async function shareInvoice(
     navigator.canShare &&
     navigator.canShare({ files: [file] })
   ) {
-    await navigator.share({
-      files: [file],
-      title: filename,
-      text: filename,
-    })
+    // Share the image alone — no title/text caption, so apps like
+    // WhatsApp don't prefill a message such as "invoice-XXX".
+    await navigator.share({ files: [file] })
     return "shared"
   }
 
