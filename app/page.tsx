@@ -1,6 +1,12 @@
 import { prisma } from "@/lib/prisma"
 import { getSession } from "@/lib/auth/session"
-import { getDashboardMetrics, getRooms, getUserCurrencyPreference } from "@/lib/db/queries"
+import {
+  getDashboardMetrics,
+  getFloorPlanLayouts,
+  getRooms,
+  getUserCurrencyPreference,
+  getUserFloorCount,
+} from "@/lib/db/queries"
 import { getDisplayName } from "@/lib/user-display-name"
 import { GlobalStatusBar } from "@/components/global-status-bar"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
@@ -14,13 +20,15 @@ export default async function DashboardPage() {
   const session = await getSession()
   const scopeUserId = session ? session.userId : null
 
-  const [rooms, metrics, currency, user] = await Promise.all([
+  const [rooms, metrics, currency, user, floorPlanLayouts, floorCount] = await Promise.all([
     getRooms(scopeUserId),
     getDashboardMetrics(scopeUserId),
     getUserCurrencyPreference(scopeUserId),
     session
       ? prisma.user.findUnique({ where: { id: session.userId }, select: { name: true, email: true } })
       : null,
+    session ? getFloorPlanLayouts(session.userId) : Promise.resolve({}),
+    getUserFloorCount(scopeUserId),
   ])
 
   return (
@@ -30,7 +38,13 @@ export default async function DashboardPage() {
         <div className="flex flex-col gap-6">
           {user && <GreetingCard name={getDisplayName(user)} />}
           <KpiCards metrics={metrics} />
-          <RoomGrid rooms={rooms} currency={currency} />
+          <RoomGrid
+            rooms={rooms}
+            currency={currency}
+            userId={scopeUserId}
+            floorPlanLayouts={floorPlanLayouts}
+            floorCount={floorCount}
+          />
         </div>
       </main>
     </>

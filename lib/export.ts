@@ -1,37 +1,65 @@
 import { toPng } from "html-to-image"
 import { jsPDF } from "jspdf"
 
-// html-to-image snapshots the DOM synchronously, so any <img> that hasn't
-// finished decoding yet (e.g. the stamp logo) gets silently dropped from
-// the output. Wait for every image in the node to be fully decoded first.
-async function waitForImages(node: HTMLElement): Promise<void> {
+// html-to-image re-fetches every <img> src and inlines it as a base64 data
+// URL before rasterizing, on top of the browser's own decode of the visible
+// <img>. On slow mobile CPUs/networks that round trip can lose the race
+// against the canvas snapshot and the image is silently dropped from the
+// output. Pre-converting each <img> to a data: URL here does that fetch
+// once, up front, and lets html-to-image skip its internal fetch entirely
+// (it no-ops on srcs that are already data: URLs). Waiting for `decode()`
+// afterwards also guarantees the pixels are actually ready to paint, not
+// just downloaded, before the snapshot runs. Callers must call the
+// returned restore() once toPng() has finished, since we mutate img.src.
+async function inlineImages(node: HTMLElement): Promise<() => void> {
   const images = Array.from(node.querySelectorAll("img"))
+  const originalSrcs = images.map((img) => img.src)
+
   await Promise.all(
-    images.map((img) => {
-      if (img.complete && img.naturalWidth > 0) return Promise.resolve()
-      return img
-        .decode()
-        .catch(
-          () =>
-            new Promise<void>((resolve) => {
-              img.onload = () => resolve()
-              img.onerror = () => resolve()
-            }),
-        )
+    images.map(async (img) => {
+      if (!img.src || img.src.startsWith("data:")) {
+        return img.decode().catch(() => {})
+      }
+      try {
+        const res = await fetch(img.src)
+        const blob = await res.blob()
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result as string)
+          reader.onerror = () => reject(reader.error)
+          reader.readAsDataURL(blob)
+        })
+        img.src = dataUrl
+        await img.decode().catch(() => {})
+      } catch {
+        // Fetch/decode failed (offline, bad path, etc.) — leave the
+        // original src in place and let html-to-image try its own fetch
+        // rather than losing the image entirely.
+      }
     }),
   )
+
+  return () => {
+    images.forEach((img, i) => {
+      img.src = originalSrcs[i]
+    })
+  }
 }
 
 async function nodeToPng(node: HTMLElement): Promise<string> {
-  await waitForImages(node)
-  // Render at 2x for crisp output. Use the resolved background so the
-  // exported image isn't transparent.
-  const bg = getComputedStyle(document.body).backgroundColor || "#ffffff"
-  return toPng(node, {
-    pixelRatio: 2,
-    cacheBust: true,
-    backgroundColor: bg,
-  })
+  const restoreImages = await inlineImages(node)
+  try {
+    // Render at 2x for crisp output. Use the resolved background so the
+    // exported image isn't transparent.
+    const bg = getComputedStyle(document.body).backgroundColor || "#ffffff"
+    return await toPng(node, {
+      pixelRatio: 2,
+      cacheBust: true,
+      backgroundColor: bg,
+    })
+  } finally {
+    restoreImages()
+  }
 }
 
 function triggerDownload(dataUrl: string, filename: string) {

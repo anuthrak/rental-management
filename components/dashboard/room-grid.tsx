@@ -3,20 +3,21 @@
 import { useEffect, useMemo, useState } from "react"
 import { Building2, Search } from "lucide-react"
 
-import type { DashboardRoom } from "@/lib/db/queries"
+import type { DashboardRoom, FloorPlanDimensions } from "@/lib/db/queries"
 import { getFloors } from "@/lib/db/queries"
 import { getAttentionRooms } from "@/lib/needs-attention"
+import { formatFloorLabel } from "@/lib/rooms"
 import type { Currency } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { useI18n } from "@/components/i18n-provider"
 import { useSimpleModeStore } from "@/store/use-simple-mode-store"
+import { DEFAULT_FLOOR_COUNT, useFloorPlanLayoutStore } from "@/store/use-floor-plan-layout-store"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { EmptyState } from "@/components/ui/empty-state"
 import { AddRoomCard } from "@/components/dashboard/add-room-card"
 import { FloorPlanGrid } from "@/components/dashboard/floor-plan-grid"
 import { FloorPlanGridBoard } from "@/components/dashboard/floor-plan-grid-board"
-import { GridLayoutSetupModal } from "@/components/dashboard/grid-layout-setup-modal"
 import { NeedsAttentionView } from "@/components/dashboard/needs-attention-view"
 import { RoomCard } from "@/components/dashboard/room-card"
 import { RoomCinemaGrid } from "@/components/dashboard/room-cinema-grid"
@@ -27,15 +28,24 @@ type MainTab = "attention" | "all"
 type ViewMode = "standard" | "grid" | "custom"
 type FloorFilter = number | "all"
 
-// Ground floor is conventionally "GF" rather than "Floor 0"; upper floors
-// use the common "F1"/"F2" shorthand instead of the more verbose "Floor N".
-function formatFloorLabel(floor: number): string {
-  return floor === 0 ? "GF" : `F${floor}`
-}
-
-export function RoomGrid({ rooms, currency }: { rooms: DashboardRoom[]; currency: Currency }) {
+export function RoomGrid({
+  rooms,
+  currency,
+  userId,
+  floorPlanLayouts,
+  floorCount,
+}: {
+  rooms: DashboardRoom[]
+  currency: Currency
+  userId: string | null
+  floorPlanLayouts: Record<number, FloorPlanDimensions>
+  floorCount: number
+}) {
   const { t } = useI18n()
   const simpleMode = useSimpleModeStore((s) => s.simpleMode)
+  const storedFloorCount = useFloorPlanLayoutStore((s) => s.floorCount)
+  const syncOwner = useFloorPlanLayoutStore((s) => s.syncOwner)
+  const hydrateFloorCount = useFloorPlanLayoutStore((s) => s.hydrateFloorCount)
   const [mainTab, setMainTab] = useState<MainTab>(simpleMode ? "attention" : "all")
   const [viewMode, setViewMode] = useState<ViewMode>("standard")
   const [selectedFloor, setSelectedFloor] = useState<FloorFilter>("all")
@@ -50,8 +60,42 @@ export function RoomGrid({ rooms, currency }: { rooms: DashboardRoom[]; currency
     setMainTab(simpleMode ? "attention" : "all")
   }, [simpleMode])
 
+  // Guards against a shared device inheriting a previous account's (or a
+  // guest session's) cached floor-plan state, then seeds floorCount from
+  // the server once per account. Runs here — not inside the Custom Layout
+  // board — since floorCount shapes the floor chips for every view, not
+  // just that one.
+  useEffect(() => {
+    syncOwner(userId)
+  }, [userId, syncOwner])
+  useEffect(() => {
+    if (userId) hydrateFloorCount(floorCount)
+  }, [userId, floorCount, hydrateFloorCount])
+
   const attentionRooms = useMemo(() => getAttentionRooms(rooms), [rooms])
-  const floors = useMemo(() => getFloors(rooms), [rooms])
+
+  // Floor chips are the union of floors real rooms occupy and the
+  // account's declared floor count, so an empty floor the landlord has set
+  // up in advance still gets a chip before any room exists on it. Guest
+  // sessions use the same local store value — it just never round-trips
+  // to a server for them, same as the rest of the Custom Layout state.
+  const floors = useMemo(() => {
+    const roomFloors = getFloors(rooms)
+    const declaredCount = storedFloorCount ?? DEFAULT_FLOOR_COUNT
+    const declaredFloors = Array.from({ length: declaredCount }, (_, i) => i + 1)
+    return [...new Set([...roomFloors, ...declaredFloors])].sort((a, b) => a - b)
+  }, [rooms, storedFloorCount])
+
+  // The Custom Layout grid's coordinate space is per-floor (two floors can
+  // each have their own room at row 0/col 0), so "All floors" doesn't make
+  // sense as a combined canvas there. Covers both ways in: switching to the
+  // Custom tab while "All floors" is selected, and switching to "All
+  // floors" via the separate floor chips while already on the Custom tab.
+  useEffect(() => {
+    if (viewMode === "custom" && selectedFloor === "all" && floors.length > 0) {
+      setSelectedFloor(floors[0])
+    }
+  }, [viewMode, selectedFloor, floors])
 
   const floorRooms = useMemo(
     () => (selectedFloor === "all" ? rooms : rooms.filter((room) => room.floor === selectedFloor)),
@@ -149,13 +193,21 @@ export function RoomGrid({ rooms, currency }: { rooms: DashboardRoom[]; currency
             </Tabs>
           </div>
 
-          {viewMode === "custom" ? (
-            <div className="flex flex-col gap-3">
-              <div className="flex justify-end">
-                <GridLayoutSetupModal />
-              </div>
-              <FloorPlanGridBoard rooms={floorRooms} onOpenRoom={setSelectedRoomId} />
-            </div>
+          {viewMode === "custom" && selectedFloor !== "all" ? (
+            <FloorPlanGridBoard
+              rooms={floorRooms}
+              floor={selectedFloor}
+              userId={userId}
+              serverDimensions={floorPlanLayouts[selectedFloor]}
+              onOpenRoom={setSelectedRoomId}
+            />
+          ) : viewMode === "custom" ? (
+            // Only reachable for the one render before the effect-free
+            // auto-select above lands on a real floor (e.g. a brand-new
+            // account with zero rooms/floors yet).
+            <p className="py-10 text-center text-sm text-muted-foreground">
+              {t("noRoomsMatch")}
+            </p>
           ) : viewMode === "grid" ? (
             selectedFloor !== "all" && floorRooms.some((room) => room.wing) ? (
               <FloorPlanGrid

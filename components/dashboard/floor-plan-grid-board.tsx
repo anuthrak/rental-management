@@ -1,12 +1,12 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useTransition } from "react"
 import {
   DndContext,
   DragOverlay,
   PointerSensor,
   TouchSensor,
-  closestCenter,
+  pointerWithin,
   useDraggable,
   useDroppable,
   useSensor,
@@ -14,13 +14,24 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core"
-import { GripVertical, Lock, Unlock, User } from "lucide-react"
+import { Lock, Shuffle, Unlock, User } from "lucide-react"
+import { toast } from "sonner"
 
 import type { DashboardRoom } from "@/lib/db/queries"
+import { formatFloorLabel } from "@/lib/rooms"
 import { cn } from "@/lib/utils"
 import { useI18n } from "@/components/i18n-provider"
-import { useFloorPlanLayoutStore, type GridCell } from "@/store/use-floor-plan-layout-store"
+import { updateRoomGridPositions } from "@/app/actions/floor-plan"
+import {
+  DEFAULT_DIMENSIONS,
+  useFloorPlanLayoutStore,
+  type FloorPlanDimensions,
+  type GridCell,
+  type GridPositionDiff,
+} from "@/store/use-floor-plan-layout-store"
+import { Button } from "@/components/ui/button"
 import { Toggle } from "@/components/ui/toggle"
+import { GridLayoutSetupModal } from "@/components/dashboard/grid-layout-setup-modal"
 
 const BOX_STYLES: Record<DashboardRoom["status"], string> = {
   VACANT: "bg-emerald-500/15 border-emerald-500 text-emerald-700 dark:text-emerald-400",
@@ -34,18 +45,14 @@ const DOT_STYLES: Record<DashboardRoom["status"], string> = {
   MAINTENANCE: "bg-muted-foreground/50",
 }
 
-const CELL_SIZE = "4.75rem"
+// Bigger and more tightly packed than a typical form-control grid on
+// purpose — with price and the grip icon gone (see RoomBubbleVisual), the
+// tiles read better as a solid floor-plan mosaic than as small, sparse
+// badges with lots of visible background between them.
+const CELL_SIZE = "5.5rem"
 const ROOM_DRAG_PREFIX = "room:"
 const CELL_DROP_PREFIX = "cell:"
 const TRAY_DROP_ID = "tray"
-
-function compactPrice(amount: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(amount || 0)
-}
 
 function cellDropId(cell: GridCell): string {
   return `${CELL_DROP_PREFIX}${cell.row}:${cell.col}`
@@ -57,6 +64,15 @@ function parseCellDropId(id: string): GridCell | null {
   return { row: Number(match[1]), col: Number(match[2]) }
 }
 
+function byRoomNumber(a: DashboardRoom, b: DashboardRoom): number {
+  return a.roomNumber.localeCompare(b.roomNumber, undefined, { numeric: true })
+}
+
+// Kept deliberately minimal — status color + room number is enough to place
+// a room by sight. Price and a drag-handle icon used to live here too, but
+// crammed into a ~76px tile they made every cell noisy; the grab cursor
+// already signals draggability once editing is unlocked, and price is one
+// tap away in every other view.
 function RoomBubbleVisual({
   room,
   locked,
@@ -69,23 +85,17 @@ function RoomBubbleVisual({
   return (
     <div
       className={cn(
-        "flex h-full w-full flex-col items-center justify-center gap-0.5 rounded-lg border-2 p-1 text-center select-none",
+        "flex h-full w-full flex-col items-center justify-center gap-1.5 rounded-lg border-2 p-0.5 text-center select-none",
         BOX_STYLES[room.status],
         dragging ? "shadow-lg" : !locked && "cursor-grab active:cursor-grabbing hover:shadow-md",
       )}
     >
-      <span className="flex items-center gap-1">
-        {room.tenant ? (
-          <User className="size-2.5 shrink-0 opacity-70" />
-        ) : (
-          <span className={cn("size-1.5 shrink-0 rounded-full", DOT_STYLES[room.status])} />
-        )}
-        <span className="truncate text-xs font-bold">{room.roomNumber}</span>
-        {!locked && !dragging && <GripVertical className="size-2.5 shrink-0 opacity-40" />}
-      </span>
-      <span className="text-[9px] font-semibold tabular-nums opacity-90">
-        {compactPrice(room.targetPrice)}
-      </span>
+      {room.tenant ? (
+        <User className="size-3.5 shrink-0 opacity-70" />
+      ) : (
+        <span className={cn("size-2 shrink-0 rounded-full", DOT_STYLES[room.status])} />
+      )}
+      <span className="truncate text-sm font-bold">{room.roomNumber}</span>
     </div>
   )
 }
@@ -140,9 +150,16 @@ function GridCellDropzone({
   return (
     <div
       ref={setNodeRef}
-      style={{ width: CELL_SIZE, height: CELL_SIZE }}
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-lg border border-dashed border-border/50 transition-colors",
+        // aspect-square (not a fixed size) so each cell's height always
+        // matches whatever width the grid track gives it — see the grid
+        // container below, which lets columns grow past CELL_SIZE to fill
+        // the card instead of leaving empty space when there are few of them.
+        "flex aspect-square w-full items-center justify-center rounded-lg border transition-colors",
+        // Locked reads as a clean, finished floor map — no editing
+        // affordances. Unlocked shows dashed empty slots so it's obvious
+        // where a dragged room can land.
+        locked ? "border-transparent" : "border-dashed border-border/50",
         isOver && !locked && "border-primary border-solid bg-primary/10",
       )}
     >
@@ -171,7 +188,7 @@ function UnassignedTray({
       <div
         ref={setNodeRef}
         className={cn(
-          "flex min-h-[4.75rem] flex-wrap gap-2 rounded-xl border border-dashed border-border/60 bg-muted/20 p-3 transition-colors",
+          "flex max-h-48 flex-wrap gap-1.5 overflow-y-auto rounded-xl border border-dashed border-border/60 bg-muted/20 p-3 transition-colors",
           isOver && !locked && "border-primary bg-primary/5",
         )}
       >
@@ -191,22 +208,91 @@ function UnassignedTray({
   )
 }
 
+function StatusLegend() {
+  const { t } = useI18n()
+  const items: { status: DashboardRoom["status"]; label: string }[] = [
+    { status: "VACANT", label: t("statusVacant") },
+    { status: "OCCUPIED", label: t("statusOccupied") },
+    { status: "MAINTENANCE", label: t("statusMaintenance") },
+  ]
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      {items.map(({ status, label }) => (
+        <span key={status} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <span className={cn("size-2 shrink-0 rounded-full", DOT_STYLES[status])} />
+          {label}
+        </span>
+      ))}
+    </div>
+  )
+}
+
 export function FloorPlanGridBoard({
   rooms,
+  floor,
+  userId,
+  serverDimensions,
   onOpenRoom,
 }: {
   rooms: DashboardRoom[]
+  floor: number
+  userId: string | null
+  serverDimensions?: FloorPlanDimensions
   onOpenRoom: (roomId: string) => void
 }) {
   const { t } = useI18n()
-  const dimensions = useFloorPlanLayoutStore((s) => s.dimensions)
-  const positions = useFloorPlanLayoutStore((s) => s.positions)
+  const dimensions = useFloorPlanLayoutStore((s) => s.dimensionsByFloor[floor] ?? DEFAULT_DIMENSIONS)
+  const storedPositions = useFloorPlanLayoutStore((s) => s.positionsByFloor[floor])
   const locked = useFloorPlanLayoutStore((s) => s.locked)
   const setPosition = useFloorPlanLayoutStore((s) => s.setPosition)
+  const setPositions = useFloorPlanLayoutStore((s) => s.setPositions)
   const unassignRoom = useFloorPlanLayoutStore((s) => s.unassignRoom)
   const toggleLocked = useFloorPlanLayoutStore((s) => s.toggleLocked)
+  const hydrateFloor = useFloorPlanLayoutStore((s) => s.hydrateFloor)
+  const pruneFloor = useFloorPlanLayoutStore((s) => s.pruneFloor)
+
+  const positions = storedPositions ?? {}
 
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null)
+  const [, startTransition] = useTransition()
+
+  // Seed this floor from the server once — guest/demo sessions (no userId)
+  // have no server copy, so they keep whatever this browser already has in
+  // localStorage. storedPositions flips from undefined to a real object
+  // after this runs, so it never re-fires for the same floor/owner.
+  useEffect(() => {
+    if (!userId || storedPositions !== undefined) return
+    const initial: Record<string, GridCell> = {}
+    for (const room of rooms) {
+      if (room.gridRow != null && room.gridCol != null) {
+        initial[room.id] = { row: room.gridRow, col: room.gridCol }
+      }
+    }
+    hydrateFloor(floor, { dimensions: serverDimensions, positions: initial })
+  }, [floor, userId, storedPositions, rooms, serverDimensions, hydrateFloor])
+
+  // Drop cached positions for rooms that no longer exist (deleted since
+  // the last visit) so the persisted blob doesn't grow forever.
+  useEffect(() => {
+    pruneFloor(floor, new Set(rooms.map((r) => r.id)))
+  }, [floor, rooms, pruneFloor])
+
+  function persist(diffs: GridPositionDiff[]) {
+    if (!userId || diffs.length === 0) return
+    startTransition(async () => {
+      try {
+        await updateRoomGridPositions(
+          diffs.map((d) => ({
+            roomId: d.roomId,
+            gridRow: d.cell?.row ?? null,
+            gridCol: d.cell?.col ?? null,
+          })),
+        )
+      } catch {
+        toast.error(t("gridSyncErrorToast"))
+      }
+    })
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -215,9 +301,6 @@ export function FloorPlanGridBoard({
 
   const roomsById = useMemo(() => new Map(rooms.map((room) => [room.id, room])), [rooms])
 
-  // Positions that reference a room outside this set (e.g. filtered to a
-  // different floor) or a cell outside the current dimensions are ignored
-  // rather than deleted, so they still apply once back in range.
   const placedRoomIds = useMemo(() => {
     const map = new Map<string, GridCell>()
     for (const room of rooms) {
@@ -236,9 +319,12 @@ export function FloorPlanGridBoard({
   }, [placedRoomIds])
 
   const unassignedRooms = useMemo(
-    () => rooms.filter((room) => !placedRoomIds.has(room.id)),
+    () => rooms.filter((room) => !placedRoomIds.has(room.id)).sort(byRoomNumber),
     [rooms, placedRoomIds],
   )
+
+  const freeCellCount = dimensions.rows * dimensions.cols - placedRoomIds.size
+  const overflowCount = Math.max(0, unassignedRooms.length - freeCellCount)
 
   function handleDragStart(event: DragStartEvent) {
     setActiveRoomId(String(event.active.id).replace(ROOM_DRAG_PREFIX, ""))
@@ -253,64 +339,124 @@ export function FloorPlanGridBoard({
     const overId = String(over.id)
 
     if (overId === TRAY_DROP_ID) {
-      unassignRoom(roomId)
+      persist(unassignRoom(floor, roomId))
       return
     }
 
     const cell = parseCellDropId(overId)
-    if (cell) setPosition(roomId, cell)
+    if (cell) persist(setPosition(floor, roomId, cell))
+  }
+
+  // Fills empty cells (row-major order) with the unassigned rooms, sorted
+  // by room number, as a starting point the landlord can still hand-tweak —
+  // dragging every room one at a time is a lot of taps for a full building.
+  function handleAutoArrange() {
+    const free: GridCell[] = []
+    for (let row = 0; row < dimensions.rows && free.length < unassignedRooms.length; row++) {
+      for (let col = 0; col < dimensions.cols && free.length < unassignedRooms.length; col++) {
+        if (!occupantByCell.has(cellDropId({ row, col }))) free.push({ row, col })
+      }
+    }
+    if (free.length === 0) return
+
+    const assignments = unassignedRooms
+      .slice(0, free.length)
+      .map((room, i) => ({ roomId: room.id, cell: free[i] }))
+    persist(setPositions(floor, assignments))
+    toast.success(t("autoArrangeToast"))
   }
 
   const activeRoom = activeRoomId ? (roomsById.get(activeRoomId) ?? null) : null
 
+  // One line of contextual copy instead of stacking a hint + a tip + a
+  // warning on top of each other — the overflow warning always wins since
+  // it's the one thing that actually blocks progress.
+  const statusMessage =
+    overflowCount > 0
+      ? { text: `${t("gridOverflowWarning")} (${overflowCount})`, tone: "warning" as const }
+      : !locked && placedRoomIds.size === 0 && unassignedRooms.length > 0
+        ? { text: t("gridFirstRunTip"), tone: "tip" as const }
+        : { text: locked ? t("gridLockedHint") : t("gridEditingHint"), tone: "muted" as const }
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-2 rounded-xl border bg-card px-3 py-2">
-        <p className="text-sm text-muted-foreground">
-          {locked ? t("gridLockedHint") : t("gridEditingHint")}
-        </p>
-        <Toggle
-          pressed={!locked}
-          onPressedChange={() => toggleLocked()}
-          variant="outline"
-          size="sm"
-          aria-label={locked ? t("unlockLayoutAction") : t("lockLayoutAction")}
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-sm font-semibold">{formatFloorLabel(floor)}</span>
+        <div className="flex items-center gap-2">
+          <GridLayoutSetupModal floor={floor} userId={userId} />
+          {!locked && unassignedRooms.length > 0 && (
+            <Button type="button" variant="outline" size="sm" onClick={handleAutoArrange}>
+              <Shuffle />
+              {t("autoArrangeAction")}
+            </Button>
+          )}
+          <Toggle
+            pressed={!locked}
+            onPressedChange={() => toggleLocked()}
+            variant="outline"
+            size="sm"
+            aria-label={locked ? t("unlockLayoutAction") : t("lockLayoutAction")}
+          >
+            {locked ? <Lock /> : <Unlock />}
+            {locked ? t("lockedLabel") : t("editingLabel")}
+          </Toggle>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
+        <p
+          className={cn(
+            "text-sm",
+            statusMessage.tone === "warning" && "font-medium text-destructive",
+            statusMessage.tone === "tip" && "font-medium text-primary",
+            statusMessage.tone === "muted" && "text-muted-foreground",
+          )}
         >
-          {locked ? <Lock /> : <Unlock />}
-          {locked ? t("lockedLabel") : t("editingLabel")}
-        </Toggle>
+          {statusMessage.text}
+        </p>
+        <StatusLegend />
       </div>
 
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCenter}
+        collisionDetection={pointerWithin}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="overflow-x-auto rounded-2xl border bg-card p-4 sm:p-6">
-          <div
-            className="grid w-fit gap-2"
-            style={{
-              gridTemplateColumns: `repeat(${dimensions.cols}, ${CELL_SIZE})`,
-              gridTemplateRows: `repeat(${dimensions.rows}, ${CELL_SIZE})`,
-            }}
-          >
-            {Array.from({ length: dimensions.rows }).map((_, row) =>
-              Array.from({ length: dimensions.cols }).map((_, col) => {
-                const cell: GridCell = { row, col }
-                const occupantId = occupantByCell.get(cellDropId(cell))
-                const room = occupantId ? roomsById.get(occupantId) : undefined
-                return (
-                  <GridCellDropzone key={cellDropId(cell)} cell={cell} locked={locked}>
-                    {room && <RoomBubble room={room} locked={locked} onOpenRoom={onOpenRoom} />}
-                  </GridCellDropzone>
-                )
-              }),
-            )}
+        <div className="flex flex-col divide-y divide-border rounded-2xl border bg-card">
+          <div className="overflow-x-auto p-4 sm:p-6">
+            <div
+              className="grid w-full gap-1.5"
+              style={{
+                // minmax lets columns grow past CELL_SIZE to fill the card
+                // when there are few of them, instead of leaving empty
+                // space; once cols * CELL_SIZE exceeds the card's width the
+                // min bound takes over and the overflow-x-auto above kicks
+                // in, same as before. Rows are intentionally left implicit —
+                // each cell's aspect-square height follows its own track's
+                // computed width, keeping cells square either way.
+                gridTemplateColumns: `repeat(${dimensions.cols}, minmax(${CELL_SIZE}, 1fr))`,
+              }}
+            >
+              {Array.from({ length: dimensions.rows }).map((_, row) =>
+                Array.from({ length: dimensions.cols }).map((_, col) => {
+                  const cell: GridCell = { row, col }
+                  const occupantId = occupantByCell.get(cellDropId(cell))
+                  const room = occupantId ? roomsById.get(occupantId) : undefined
+                  return (
+                    <GridCellDropzone key={cellDropId(cell)} cell={cell} locked={locked}>
+                      {room && <RoomBubble room={room} locked={locked} onOpenRoom={onOpenRoom} />}
+                    </GridCellDropzone>
+                  )
+                }),
+              )}
+            </div>
+          </div>
+
+          <div className="p-4 sm:p-6">
+            <UnassignedTray rooms={unassignedRooms} locked={locked} onOpenRoom={onOpenRoom} />
           </div>
         </div>
-
-        <UnassignedTray rooms={unassignedRooms} locked={locked} onOpenRoom={onOpenRoom} />
 
         <DragOverlay dropAnimation={null}>
           {activeRoom ? (

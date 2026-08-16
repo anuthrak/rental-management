@@ -8,3 +8,9 @@ export function deriveFloorFromRoomNumber(roomNumber: string): number {
   const floor = Math.floor(Number(match[1]) / 100)
   return floor >= 1 ? floor : 1
 }
+
+// Ground floor is conventionally "GF" rather than "Floor 0"; upper floors
+// use the common "F1"/"F2" shorthand instead of the more verbose "Floor N".
+export function formatFloorLabel(floor: number): string {
+  return floor === 0 ? "GF" : `F${floor}`
+}

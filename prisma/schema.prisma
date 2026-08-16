@@ -43,13 +43,19 @@ model User {
   defaultElectricRate Decimal  @default(0.25)
   invoiceNoteTemplate String?
   tourCompleted       Boolean  @default(false)
+  // Lets an account declare floors ahead of adding rooms to them (e.g. "this
+  // property has 3 floors") — floor chips in the dashboard are the union of
+  // this range and whatever floors actual rooms already occupy, so lowering
+  // it can never hide a floor that has real rooms on it.
+  floorCount          Int      @default(1)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
-  rooms    Room[]
-  tenants  Tenant[]
-  leases   Lease[]
-  invoices Invoice[]
+  rooms            Room[]
+  tenants          Tenant[]
+  leases           Lease[]
+  invoices         Invoice[]
+  floorPlanLayouts FloorPlanLayout[]
 }
 
 // Price lives on the Room as the current asking price and can change at any
@@ -69,6 +75,11 @@ model Room {
   // Renders a stairwell hatch divider immediately after this room in its
   // wing's stack, matching a stairwell drawn between rooms on the sketch.
   stairAfter  Boolean    @default(false)
+  // Cell coordinates for the freeform "Custom Layout" grid view; null means
+  // the room sits in that view's unassigned tray. Independent of wing/
+  // position, which drive the separate wing-sketch "Grid" view.
+  gridRow     Int?
+  gridCol     Int?
   targetPrice Decimal
   status      RoomStatus @default(VACANT)
   userId      String?
@@ -87,6 +98,22 @@ model Room {
   // dataset) already has them.
   @@unique([userId, roomNumber])
   @@index([userId])
+}
+
+// Grid size (in cells) for one account's Custom Layout view, one row per
+// floor — separate from Room.gridRow/gridCol so an empty grid can be sized
+// before any room is placed in it. Absent for a floor means it hasn't been
+// customized yet and the UI falls back to a default size.
+model FloorPlanLayout {
+  id     String @id @default(cuid())
+  userId String
+  floor  Int
+  rows   Int
+  cols   Int
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, floor])
 }
 
 // roomId is a denormalized "current room" pointer kept in sync by the

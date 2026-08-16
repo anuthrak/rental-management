@@ -20,6 +20,18 @@ export async function getUserCurrencyPreference(userId: string | null): Promise<
   return (user?.currencyPreference as Currency) ?? "USD"
 }
 
+// Same guest fallback pattern as getUserCurrencyPreference — demo mode has
+// no User row, so it gets the same default (1 floor) a brand-new account
+// starts with.
+export async function getUserFloorCount(userId: string | null): Promise<number> {
+  if (!userId) return 1
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { floorCount: true },
+  })
+  return user?.floorCount ?? 1
+}
+
 // User.invoiceNoteTemplate stays NULL until an account explicitly saves one
 // (via onboarding or the future settings page). Returns the raw value —
 // null means "nothing saved yet" — so callers can tell that apart from a
@@ -73,6 +85,8 @@ export type DashboardRoom = {
   position: number
   isVip: boolean
   stairAfter: boolean
+  gridRow: number | null
+  gridCol: number | null
   targetPrice: number
   status: RoomStatus
   lease: { id: string; agreedRent: number } | null
@@ -108,6 +122,8 @@ export async function getRooms(userId?: string | null): Promise<DashboardRoom[]>
       position: room.position,
       isVip: room.isVip,
       stairAfter: room.stairAfter,
+      gridRow: room.gridRow,
+      gridCol: room.gridCol,
       targetPrice: room.targetPrice.toNumber(),
       status: room.status,
       lease: lease ? { id: lease.id, agreedRent: lease.agreedRent.toNumber() } : null,
@@ -141,6 +157,18 @@ export async function getRooms(userId?: string | null): Promise<DashboardRoom[]>
 // navigation tabs without a separate DB round trip.
 export function getFloors(rooms: DashboardRoom[]): number[] {
   return [...new Set(rooms.map((room) => room.floor))].sort((a, b) => a - b)
+}
+
+export type FloorPlanDimensions = { rows: number; cols: number }
+
+// Custom Layout grid size per floor. Demo/guest sessions (userId null) have
+// no account to own a FloorPlanLayout row, so the Custom Layout view falls
+// back to purely client-local storage for them instead of calling this.
+export async function getFloorPlanLayouts(
+  userId: string,
+): Promise<Record<number, FloorPlanDimensions>> {
+  const layouts = await prisma.floorPlanLayout.findMany({ where: { userId } })
+  return Object.fromEntries(layouts.map((l) => [l.floor, { rows: l.rows, cols: l.cols }]))
 }
 
 export type DashboardInvoice = {
