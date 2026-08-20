@@ -22,11 +22,13 @@ const repoRoot = join(__dirname, "..")
 const migrationsDir = join(repoRoot, "prisma", "migrations")
 
 function loadDatabaseUrl() {
-  if (process.env.DATABASE_URL) return process.env.DATABASE_URL
+  if (process.env.DATABASE_URL) return process.env.DATABASE_URL.trim()
   const envFile = join(repoRoot, ".env.production.local")
   if (existsSync(envFile)) {
-    const match = readFileSync(envFile, "utf8").match(/^DATABASE_URL="(.+)"$/m)
-    if (match) return match[1]
+    // vercel env pull writes CRLF line endings on Windows; \r?$ and a
+    // trim() keep this working whether the file is CRLF or LF.
+    const match = readFileSync(envFile, "utf8").match(/^DATABASE_URL="(.+)"\r?$/m)
+    if (match) return match[1].trim()
   }
   return null
 }
