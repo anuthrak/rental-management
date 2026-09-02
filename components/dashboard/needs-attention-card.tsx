@@ -38,8 +38,9 @@ export function NeedsAttentionCard({
       ? formatCurrency(usdToKhr(invoice.amountDue), "KHR", locale)
       : formatCurrency(invoice.amountDue, "USD", locale)
 
+  const overdueDaysDisplay = overdueDays > 99 ? "99+" : `${overdueDays}`
   const dueLabel = invoice.isOverdue
-    ? `${overdueDays} ${t("daysOverdueLabel")}`
+    ? `${overdueDaysDisplay} ${overdueDays === 1 ? t("dayOverdueLabelSingular") : t("daysOverdueLabel")}`
     : `${t("dueLabel")} ${formatDateDMY(invoice.dueDate)}`
 
   async function handleShare(e: React.MouseEvent) {

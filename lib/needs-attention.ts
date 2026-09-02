@@ -23,7 +23,8 @@ export function getAttentionRooms(rooms: DashboardRoom[]): AttentionRoom[] {
   return result
 }
 
-export function daysOverdue(dueDate: Date, now: Date = new Date()): number {
+export function daysOverdue(dueDate: Date | null | undefined, now: Date = new Date()): number {
+  if (!dueDate) return 0
   const diffMs = now.getTime() - dueDate.getTime()
   return Math.max(0, Math.floor(diffMs / (24 * 60 * 60 * 1000)))
 }
