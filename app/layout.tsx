@@ -26,7 +26,7 @@ const spaceGrotesk = Space_Grotesk({
 })
 
 export const metadata: Metadata = {
-  title: 'RentLedger — Utility & Rent Invoicing',
+  title: 'Rental System — Utility & Invoicing',
   description:
     'Create itemized rent and utility invoices for tenants, preview them live, save your history, and export to PDF or image.',
   generator: 'v0.app',

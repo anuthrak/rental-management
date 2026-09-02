@@ -94,7 +94,7 @@ const en = {
 
   // Dashboard / Payments / Meter readings
   dashboardTitle: "Property Dashboard",
-  dashboardTagline: "40 rooms · occupancy & billing",
+  dashboardTagline: "rooms · occupancy · billing",
   navPayments: "Payments",
   navInvoiceGenerator: "Invoice Generator",
   navInvoiceShort: "Invoice",
@@ -473,7 +473,7 @@ const km: typeof en = {
 
   // Dashboard / Payments / Meter readings
   dashboardTitle: "ផ្ទាំងគ្រប់គ្រងអចលនទ្រព្យ",
-  dashboardTagline: "40 បន្ទប់ · ការកាន់កាប់ និងវិក្កយបត្រ",
+  dashboardTagline: "បន្ទប់ · ការកាន់កាប់ · វិក្កយបត្រ",
   navPayments: "ការទូទាត់",
   navInvoiceGenerator: "កម្មវិធីបង្កើតវិក្កយបត្រ",
   navInvoiceShort: "វិក្កយបត្រ",
