@@ -13,7 +13,7 @@ export default async function OnboardingPage() {
   // "Test Onboarding" shortcut shown in demo mode).
   if (!session) {
     if (demoMode) {
-      return <OnboardingWizard />
+      return <OnboardingWizard isDemoMode />
     }
     redirect("/login")
   }

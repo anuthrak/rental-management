@@ -6,6 +6,7 @@ import { ArrowLeft, Building2, Receipt } from "lucide-react"
 import { useI18n } from "@/components/i18n-provider"
 import { useInvoiceStore } from "@/store/use-invoice-store"
 import { useSimpleModeStore } from "@/store/use-simple-mode-store"
+import { ELECTRIC_RATE_USD } from "@/lib/calc"
 import { PageHeader } from "@/components/page-header"
 import { InvoiceForm } from "@/components/invoice/invoice-form"
 import { InvoicePreview } from "@/components/invoice/invoice-preview"
@@ -17,29 +18,45 @@ import { Skeleton } from "@/components/ui/skeleton"
 export function Dashboard({
   banner,
   accountNoteTemplate,
+  accountWaterRate,
+  accountElectricRate,
 }: {
   banner?: React.ReactNode
   // The signed-in account's saved invoice note template (null in demo mode
   // or if the account hasn't saved one) — fetched server-side in
   // app/invoice/page.tsx and applied post-hydration below.
   accountNoteTemplate?: string | null
+  // The signed-in account's saved utility rates (see getUserUtilityRates) —
+  // fetched server-side in app/invoice/page.tsx. Undefined in demo mode.
+  accountWaterRate?: number
+  accountElectricRate?: number
 }) {
   const { t } = useI18n()
   const simpleMode = useSimpleModeStore((s) => s.simpleMode)
   const hasHydrated = useInvoiceStore((s) => s.hasHydrated)
   const savedCount = useInvoiceStore((s) => s.savedInvoices.length)
   const applyAccountNoteTemplate = useInvoiceStore((s) => s.applyAccountNoteTemplate)
+  const applyAccountRates = useInvoiceStore((s) => s.applyAccountRates)
   const previewRef = useRef<HTMLDivElement | null>(null)
   const [tab, setTab] = useState("preview")
 
-  // Runs on every mount, but applyAccountNoteTemplate only ever overwrites
-  // notes that still match a built-in stock default — so this can't clobber
-  // text the user actually typed into a draft.
+  // Runs on every mount, but applyAccountNoteTemplate/applyAccountRates only
+  // ever overwrite fields that still match a built-in stock default — so
+  // this can't clobber text/rates the user actually edited into a draft.
   useEffect(() => {
-    if (hasHydrated && accountNoteTemplate) {
-      applyAccountNoteTemplate(accountNoteTemplate)
+    if (!hasHydrated) return
+    if (accountNoteTemplate) applyAccountNoteTemplate(accountNoteTemplate)
+    if (accountWaterRate !== undefined) {
+      applyAccountRates(accountWaterRate, accountElectricRate ?? ELECTRIC_RATE_USD)
     }
-  }, [hasHydrated, accountNoteTemplate, applyAccountNoteTemplate])
+  }, [
+    hasHydrated,
+    accountNoteTemplate,
+    accountWaterRate,
+    accountElectricRate,
+    applyAccountNoteTemplate,
+    applyAccountRates,
+  ])
 
   return (
     <>
@@ -49,7 +66,7 @@ export function Dashboard({
         tagline={t("appTagline")}
         tutorialPageId="invoice"
         banner={banner}
-        links={[{ href: "/", icon: Building2, label: t("navDashboard") }]}
+        links={[{ href: "/", icon: ArrowLeft, label: t("navDashboard") }]}
       />
       <main className="mx-auto min-h-svh w-full max-w-7xl px-4 py-6 sm:px-6 lg:py-10">
 

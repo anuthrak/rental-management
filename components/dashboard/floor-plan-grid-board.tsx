@@ -14,11 +14,10 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core"
-import { Lock, Shuffle, Unlock, User } from "lucide-react"
+import { Info, Lock, Search, Shuffle, Unlock, User } from "lucide-react"
 import { toast } from "sonner"
 
 import type { DashboardRoom } from "@/lib/db/queries"
-import { formatFloorLabel } from "@/lib/rooms"
 import { cn } from "@/lib/utils"
 import { useI18n } from "@/components/i18n-provider"
 import { updateRoomGridPositions } from "@/app/actions/floor-plan"
@@ -30,7 +29,9 @@ import {
   type GridPositionDiff,
 } from "@/store/use-floor-plan-layout-store"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Toggle } from "@/components/ui/toggle"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { GridLayoutSetupModal } from "@/components/dashboard/grid-layout-setup-modal"
 
 const BOX_STYLES: Record<DashboardRoom["status"], string> = {
@@ -50,9 +51,21 @@ const DOT_STYLES: Record<DashboardRoom["status"], string> = {
 // tiles read better as a solid floor-plan mosaic than as small, sparse
 // badges with lots of visible background between them.
 const CELL_SIZE = "5.5rem"
+// Grid tracks are bounded on both ends via minmax(MIN_CELL_SIZE,
+// MAX_CELL_SIZE) — MAX_CELL_SIZE is aliased to CELL_SIZE (not a second
+// literal) so "today's default look, unchanged for typical grids" stays
+// true by construction. MIN_CELL_SIZE is bumped slightly above the
+// paper-estimate 3.25rem floor to keep RoomBubbleVisual's icon + room
+// number from reading as cramped at the smallest size.
+const MAX_CELL_SIZE = CELL_SIZE
+const MIN_CELL_SIZE = "3.5rem"
 const ROOM_DRAG_PREFIX = "room:"
 const CELL_DROP_PREFIX = "cell:"
 const TRAY_DROP_ID = "tray"
+// Below this many unassigned rooms, a filter input is just clutter — a
+// handful of bubbles are already scannable at a glance. Above it, typing a
+// room number is faster than scrolling the (now height-bounded) tray.
+const UNASSIGNED_FILTER_THRESHOLD = 10
 
 function cellDropId(cell: GridCell): string {
   return `${CELL_DROP_PREFIX}${cell.row}:${cell.col}`
@@ -153,8 +166,9 @@ function GridCellDropzone({
       className={cn(
         // aspect-square (not a fixed size) so each cell's height always
         // matches whatever width the grid track gives it — see the grid
-        // container below, which lets columns grow past CELL_SIZE to fill
-        // the card instead of leaving empty space when there are few of them.
+        // container below, whose tracks are bounded between MIN_CELL_SIZE
+        // and MAX_CELL_SIZE rather than stretching unbounded to fill the
+        // card when there are few columns.
         "flex aspect-square w-full items-center justify-center rounded-lg border transition-colors",
         // Locked reads as a clean, finished floor map — no editing
         // affordances. Unlocked shows dashed empty slots so it's obvious
@@ -179,16 +193,37 @@ function UnassignedTray({
 }) {
   const { t } = useI18n()
   const { setNodeRef, isOver } = useDroppable({ id: TRAY_DROP_ID, disabled: locked })
+  const [filter, setFilter] = useState("")
+
+  const showFilter = rooms.length > UNASSIGNED_FILTER_THRESHOLD
+
+  const visibleRooms = useMemo(() => {
+    if (!showFilter) return rooms
+    const q = filter.trim().toLowerCase()
+    if (!q) return rooms
+    return rooms.filter((room) => room.roomNumber.toLowerCase().includes(q))
+  }, [rooms, filter, showFilter])
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 lg:h-full">
       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
         {t("unassignedRoomsLabel")} ({rooms.length})
       </p>
+      {showFilter && (
+        <div className="relative">
+          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder={t("filterUnassignedRoomsPlaceholder")}
+            className="h-8 pl-8 text-sm"
+          />
+        </div>
+      )}
       <div
         ref={setNodeRef}
         className={cn(
-          "flex max-h-48 flex-wrap gap-1.5 overflow-y-auto rounded-xl border border-dashed border-border/60 bg-muted/20 p-3 transition-colors",
+          "flex max-h-48 flex-wrap content-start gap-1.5 overflow-y-auto rounded-xl border border-dashed border-border/60 bg-muted/20 p-3 transition-colors lg:max-h-[32rem] lg:flex-1",
           isOver && !locked && "border-primary bg-primary/5",
         )}
       >
@@ -196,8 +231,12 @@ function UnassignedTray({
           <p className="flex w-full items-center justify-center py-4 text-sm text-muted-foreground">
             {t("allRoomsPlacedLabel")}
           </p>
+        ) : visibleRooms.length === 0 ? (
+          <p className="flex w-full items-center justify-center py-4 text-sm text-muted-foreground">
+            {t("noRoomsMatch")}
+          </p>
         ) : (
-          rooms.map((room) => (
+          visibleRooms.map((room) => (
             <div key={room.id} style={{ width: CELL_SIZE, height: CELL_SIZE }} className="shrink-0">
               <RoomBubble room={room} locked={locked} onOpenRoom={onOpenRoom} />
             </div>
@@ -208,6 +247,10 @@ function UnassignedTray({
   )
 }
 
+// Rendered inside a Tooltip popup (dark bg, light text) rather than inline
+// in the board's chrome row — see point 4 of the layout pass: the color
+// legend is useful but doesn't need to occupy its own row when it's one
+// info-icon tap/hover away.
 function StatusLegend() {
   const { t } = useI18n()
   const items: { status: DashboardRoom["status"]; label: string }[] = [
@@ -216,9 +259,9 @@ function StatusLegend() {
     { status: "MAINTENANCE", label: t("statusMaintenance") },
   ]
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-col gap-1.5">
       {items.map(({ status, label }) => (
-        <span key={status} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <span key={status} className="flex items-center gap-1.5 text-xs">
           <span className={cn("size-2 shrink-0 rounded-full", DOT_STYLES[status])} />
           {label}
         </span>
@@ -381,7 +424,35 @@ export function FloorPlanGridBoard({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-sm font-semibold">{formatFloorLabel(floor)}</span>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <p
+            className={cn(
+              "text-sm",
+              statusMessage.tone === "warning" && "font-medium text-destructive",
+              statusMessage.tone === "tip" && "font-medium text-primary",
+              statusMessage.tone === "muted" && "text-muted-foreground",
+            )}
+          >
+            {statusMessage.text}
+          </p>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <button
+                  type="button"
+                  aria-label={t("statusLegendLabel")}
+                  className="rounded-full p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Info className="size-3.5" />
+                </button>
+              }
+            />
+            <TooltipContent>
+              <StatusLegend />
+            </TooltipContent>
+          </Tooltip>
+        </div>
+
         <div className="flex items-center gap-2">
           <GridLayoutSetupModal floor={floor} userId={userId} />
           {!locked && unassignedRooms.length > 0 && (
@@ -396,25 +467,12 @@ export function FloorPlanGridBoard({
             variant="outline"
             size="sm"
             aria-label={locked ? t("unlockLayoutAction") : t("lockLayoutAction")}
+            className="border-primary/50 bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary data-[state=on]:bg-primary/15 data-[state=on]:text-primary"
           >
             {locked ? <Lock /> : <Unlock />}
             {locked ? t("lockedLabel") : t("editingLabel")}
           </Toggle>
         </div>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
-        <p
-          className={cn(
-            "text-sm",
-            statusMessage.tone === "warning" && "font-medium text-destructive",
-            statusMessage.tone === "tip" && "font-medium text-primary",
-            statusMessage.tone === "muted" && "text-muted-foreground",
-          )}
-        >
-          {statusMessage.text}
-        </p>
-        <StatusLegend />
       </div>
 
       <DndContext
@@ -423,19 +481,22 @@ export function FloorPlanGridBoard({
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex flex-col divide-y divide-border rounded-2xl border bg-card">
-          <div className="overflow-x-auto p-4 sm:p-6">
+        <div className="flex flex-col rounded-2xl border bg-card lg:flex-row lg:divide-x lg:divide-border">
+          <div className="overflow-x-auto p-4 sm:p-6 lg:flex-1">
             <div
-              className="grid w-full gap-1.5"
+              className="grid w-full justify-center gap-1.5"
               style={{
-                // minmax lets columns grow past CELL_SIZE to fill the card
-                // when there are few of them, instead of leaving empty
-                // space; once cols * CELL_SIZE exceeds the card's width the
-                // min bound takes over and the overflow-x-auto above kicks
-                // in, same as before. Rows are intentionally left implicit —
-                // each cell's aspect-square height follows its own track's
-                // computed width, keeping cells square either way.
-                gridTemplateColumns: `repeat(${dimensions.cols}, minmax(${CELL_SIZE}, 1fr))`,
+                // Tracks are bounded on both ends (MIN_CELL_SIZE..MAX_CELL_SIZE)
+                // so low column counts no longer balloon to fill the card —
+                // once cols * MAX_CELL_SIZE is less than the available width,
+                // justify-center (below) centers the track block instead of
+                // stretching each track to fill the remaining space. Once
+                // cols * MIN_CELL_SIZE exceeds the card's width, the min bound
+                // takes over and the overflow-x-auto wrapper kicks in, same as
+                // before. Rows are intentionally left implicit — each cell's
+                // aspect-square height follows its own track's computed width,
+                // keeping cells square either way.
+                gridTemplateColumns: `repeat(${dimensions.cols}, minmax(${MIN_CELL_SIZE}, ${MAX_CELL_SIZE}))`,
               }}
             >
               {Array.from({ length: dimensions.rows }).map((_, row) =>
@@ -453,7 +514,7 @@ export function FloorPlanGridBoard({
             </div>
           </div>
 
-          <div className="p-4 sm:p-6">
+          <div className="border-t border-border p-4 sm:p-6 lg:flex lg:w-72 lg:shrink-0 lg:flex-col lg:border-t-0">
             <UnassignedTray rooms={unassignedRooms} locked={locked} onOpenRoom={onOpenRoom} />
           </div>
         </div>

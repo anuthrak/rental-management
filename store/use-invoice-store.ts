@@ -100,6 +100,7 @@ interface InvoiceState {
   moveLineItem: (fromIndex: number, toIndex: number) => void
   toggleSecurityFee: (label: string) => void
   applyAccountNoteTemplate: (template: string) => void
+  applyAccountRates: (waterRateUsd: number, electricRateUsd: number) => void
   resetDraft: () => void
   saveInvoice: () => Invoice
   loadInvoice: (id: string) => void
@@ -244,6 +245,36 @@ export const useInvoiceStore = create<InvoiceState>()(
           const isStockDefault = Object.values(DEFAULT_INVOICE_NOTES).includes(s.draft.notes)
           if (!isStockDefault || s.draft.notes === template) return s
           return { draft: { ...s.draft, notes: template } }
+        }),
+      // Mirrors applyAccountNoteTemplate's guard exactly: only overwrites
+      // while the draft's rates still match the built-in stock defaults, so
+      // it can safely run on every mount without ever clobbering a rate the
+      // user already edited by hand. Also rescales any already-added m³/kW
+      // line item still sitting at the old stock rate, so quick-add rows
+      // added before this effect ran pick up the fix too (mirrors
+      // updateDraft's currency-switch rescale branch).
+      applyAccountRates: (waterRateUsd, electricRateUsd) =>
+        set((s) => {
+          const isStockWater = s.draft.waterRateUsd === WATER_RATE_USD
+          const isStockElectric = s.draft.electricRateUsd === ELECTRIC_RATE_USD
+          if (!isStockWater && !isStockElectric) return s
+          const lineItems = s.draft.lineItems.map((item) => {
+            if (isStockWater && item.unit === "m³" && item.rate === s.draft.waterRateUsd) {
+              return { ...item, rate: scaledRate(waterRateUsd, s.draft.currency) }
+            }
+            if (isStockElectric && item.unit === "kW" && item.rate === s.draft.electricRateUsd) {
+              return { ...item, rate: scaledRate(electricRateUsd, s.draft.currency) }
+            }
+            return item
+          })
+          return {
+            draft: {
+              ...s.draft,
+              lineItems,
+              waterRateUsd: isStockWater ? waterRateUsd : s.draft.waterRateUsd,
+              electricRateUsd: isStockElectric ? electricRateUsd : s.draft.electricRateUsd,
+            },
+          }
         }),
       resetDraft: () =>
         set((s) => ({

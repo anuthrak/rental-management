@@ -99,6 +99,7 @@ const en = {
   navInvoiceGenerator: "Invoice Generator",
   navInvoiceShort: "Invoice",
   navDashboard: "Dashboard",
+  navSettings: "Settings",
   navMore: "More",
   moreSheetTitle: "More options",
   paymentsTitle: "Payments",
@@ -147,9 +148,11 @@ const en = {
   editingLabel: "Editing",
   unassignedRoomsLabel: "Unassigned Rooms",
   allRoomsPlacedLabel: "All rooms are placed on the grid",
+  filterUnassignedRoomsPlaceholder: "Filter unassigned rooms...",
   autoArrangeAction: "Auto-arrange",
   autoArrangeToast: "Unassigned rooms arranged into the grid",
   gridOverflowWarning: "Not enough space for all rooms — increase the grid size",
+  statusLegendLabel: "Status legend",
   gridSyncErrorToast: "Couldn't save the layout — check your connection and try again",
   noRoomsMatch: "No rooms match your search.",
   noInvoicesMatch: "No invoices match your search.",
@@ -163,6 +166,13 @@ const en = {
   addRoomDesc: "Create a room and set its target monthly rent.",
   roomNumberField: "Room number",
   targetPriceField: "Target monthly rent",
+  floorField: "Floor",
+  invalidRoomFloorError: "Enter a valid floor",
+  floorSlotsUsedLabel: "{used} of {capacity} slots used",
+  floorFullError: "This floor is full — increase its grid size or free up a slot first",
+  roomFloorUpdatedToast: "Room floor updated",
+  editRoomFloorAriaLabel: "Edit room floor",
+  saveAction: "Save",
   createRoomAction: "Create room",
   roomCreatedToast: "Room created",
   roomExistsError: "Room number already exists",
@@ -218,6 +228,24 @@ const en = {
   skipOnboarding: "Skip Onboarding",
   onboardingBack: "Back",
   onboardingNext: "Next",
+
+  // Onboarding — step-indicator labels
+  propertyStepLabel: "Property",
+  floorsStepLabel: "Floors",
+  tenantsStepLabel: "Tenants",
+  preferencesStepLabel: "Preferences",
+  reviewStepLabel: "Review",
+
+  // Onboarding — Floors & Capacity step
+  floorsStepHeading: "Floors & capacity",
+  floorsStepDesc: "Tell us how many floors your property has, and how many rooms go on each.",
+  roomsOnFloorField: "Rooms on this floor",
+  floorCapacityField: "Room capacity for this floor",
+  floorCapacityHelp:
+    "You'll assign each custom room to a floor on the previous step — it can't exceed this number.",
+  totalRoomsLabel: "Total rooms",
+  standardRoomsAcrossFloorsNote: "Room count is set per floor in the next step.",
+  roomFloorField: "Floor",
 
   // Onboarding — wizard shell & steps 1-4
   onboardingTitle: "Set up your property",
@@ -380,6 +408,27 @@ const en = {
   noPhoneOnFile: "No phone on file",
   shareSentToast: "Shared",
   shareCopiedToast: "Invoice summary copied to clipboard",
+
+  // Account Settings page
+  settingsPageTitle: "Settings",
+  settingsPageTagline: "Manage your account, rates, and floors",
+  propertyBusinessSectionTitle: "Property & business",
+  utilityRatesSectionTitle: "Utility rates",
+  invoiceNoteSectionTitle: "Invoice note template",
+  floorsCapacitySectionTitle: "Floors & capacity",
+  simpleModeDefaultSectionTitle: "Simple Mode",
+  simpleModeDefaultLabel: "Start new sessions in Simple Mode",
+  simpleModeDefaultDesc:
+    "Applies the next time you sign in on a new device or clear your browser data — this session's toggle is unaffected.",
+  guidedTourSectionTitle: "Guided tour",
+  replayGuidedTourAction: "Replay guided tour",
+  replayGuidedTourDesc: "Restart the dashboard walkthrough from the beginning.",
+  settingsSaveAction: "Save changes",
+  settingsSavedToast: "Settings saved",
+  demoPreviewTitle: "Preview only",
+  settingsDemoDesc: "Settings are read-only in demo mode. Sign up to save your own.",
+  onboardingDemoDesc: "You can click through every step, but nothing is saved in demo mode. Sign up to set up your own property.",
+  close: "Close",
 }
 
 const km: typeof en = {
@@ -479,6 +528,7 @@ const km: typeof en = {
   navInvoiceGenerator: "កម្មវិធីបង្កើតវិក្កយបត្រ",
   navInvoiceShort: "វិក្កយបត្រ",
   navDashboard: "ផ្ទាំងគ្រប់គ្រង",
+  navSettings: "ការកំណត់",
   navMore: "ច្រើនទៀត",
   moreSheetTitle: "ជម្រើសបន្ថែម",
   paymentsTitle: "ការទូទាត់",
@@ -527,9 +577,11 @@ const km: typeof en = {
   editingLabel: "កំពុងកែ",
   unassignedRoomsLabel: "បន្ទប់មិនទាន់កំណត់",
   allRoomsPlacedLabel: "បន្ទប់ទាំងអស់ត្រូវបានដាក់លើក្រឡាចត្រង្គ",
+  filterUnassignedRoomsPlaceholder: "ត្រងបន្ទប់មិនទាន់កំណត់...",
   autoArrangeAction: "រៀបចំស្វ័យប្រវត្តិ",
   autoArrangeToast: "បន្ទប់មិនទាន់កំណត់ត្រូវបានរៀបចំចូលក្រឡាចត្រង្គ",
   gridOverflowWarning: "ទំហំមិនគ្រប់គ្រាន់សម្រាប់បន្ទប់ទាំងអស់ — សូមបង្កើនទំហំក្រឡាចត្រង្គ",
+  statusLegendLabel: "តារាងសម្គាល់ស្ថានភាព",
   gridSyncErrorToast: "មិនអាចរក្សាទុកប្លង់បានទេ — សូមពិនិត្យការតភ្ជាប់របស់អ្នក ហើយសាកល្បងម្តងទៀត",
   noRoomsMatch: "គ្មានបន្ទប់ត្រូវនឹងការស្វែងរករបស់អ្នក។",
   noInvoicesMatch: "គ្មានវិក្កយបត្រត្រូវនឹងការស្វែងរករបស់អ្នក។",
@@ -543,6 +595,13 @@ const km: typeof en = {
   addRoomDesc: "បង្កើតបន្ទប់ថ្មី និងកំណត់ថ្លៃឈ្នួលគោលដៅប្រចាំខែ។",
   roomNumberField: "លេខបន្ទប់",
   targetPriceField: "ថ្លៃឈ្នួលគោលដៅប្រចាំខែ",
+  floorField: "ជាន់",
+  invalidRoomFloorError: "សូមបញ្ចូលជាន់ត្រឹមត្រូវ",
+  floorSlotsUsedLabel: "{used} នៃ {capacity} កន្លែងបានប្រើ",
+  floorFullError: "ជាន់នេះពេញហើយ — សូមបង្កើនទំហំក្រឡាចត្រង្គ ឬដោះលែងកន្លែងណាមួយសិន",
+  roomFloorUpdatedToast: "ជាន់នៃបន្ទប់ត្រូវបានធ្វើបច្ចុប្បន្នភាព",
+  editRoomFloorAriaLabel: "កែសម្រួលជាន់បន្ទប់",
+  saveAction: "រក្សាទុក",
   createRoomAction: "បង្កើតបន្ទប់",
   roomCreatedToast: "បន្ទប់ត្រូវបានបង្កើត",
   roomExistsError: "លេខបន្ទប់នេះមានរួចហើយ",
@@ -598,6 +657,24 @@ const km: typeof en = {
   skipOnboarding: "រំលងការដំឡើង",
   onboardingBack: "ថយក្រោយ",
   onboardingNext: "បន្ទាប់",
+
+  // Onboarding — step-indicator labels
+  propertyStepLabel: "អចលនទ្រព្យ",
+  floorsStepLabel: "ជាន់",
+  tenantsStepLabel: "អ្នកជួល",
+  preferencesStepLabel: "ចំណូលចិត្ត",
+  reviewStepLabel: "ពិនិត្យ",
+
+  // Onboarding — Floors & Capacity step
+  floorsStepHeading: "ជាន់ និងសមត្ថភាព",
+  floorsStepDesc: "សូមប្រាប់ពីចំនួនជាន់នៃអចលនទ្រព្យរបស់អ្នក និងចំនួនបន្ទប់នៅជាន់នីមួយៗ។",
+  roomsOnFloorField: "ចំនួនបន្ទប់នៅជាន់នេះ",
+  floorCapacityField: "សមត្ថភាពបន្ទប់សម្រាប់ជាន់នេះ",
+  floorCapacityHelp:
+    "អ្នកនឹងកំណត់បន្ទប់តាមបំណងនីមួយៗទៅជាន់នៅជំហានមុន — វាមិនអាចលើសពីចំនួននេះទេ។",
+  totalRoomsLabel: "ចំនួនបន្ទប់សរុប",
+  standardRoomsAcrossFloorsNote: "ចំនួនបន្ទប់ត្រូវបានកំណត់តាមជាន់នៅជំហានបន្ទាប់។",
+  roomFloorField: "ជាន់",
 
   // Onboarding — wizard shell & steps 1-4
   onboardingTitle: "រៀបចំអចលនទ្រព្យរបស់អ្នក",
@@ -760,6 +837,27 @@ const km: typeof en = {
   noPhoneOnFile: "គ្មានលេខទូរស័ព្ទ",
   shareSentToast: "បានចែករំលែក",
   shareCopiedToast: "ចម្លងសេចក្ដីសង្ខេបវិក្កយបត្រទៅក្ដារតម្បៀតខ្ទាស់",
+
+  // Account Settings page
+  settingsPageTitle: "ការកំណត់",
+  settingsPageTagline: "គ្រប់គ្រងគណនី អត្រា និងជាន់របស់អ្នក",
+  propertyBusinessSectionTitle: "អចលនទ្រព្យ & អាជីវកម្ម",
+  utilityRatesSectionTitle: "អត្រាឧបករណ៍ប្រើប្រាស់",
+  invoiceNoteSectionTitle: "គំរូចំណាំវិក្កយបត្រ",
+  floorsCapacitySectionTitle: "ជាន់ និងសមត្ថភាព",
+  simpleModeDefaultSectionTitle: "របៀបសាមញ្ញ",
+  simpleModeDefaultLabel: "ចាប់ផ្តើមសម័យប្រើប្រាស់ថ្មីក្នុងរបៀបសាមញ្ញ",
+  simpleModeDefaultDesc:
+    "អនុវត្តនៅពេលអ្នកចូលគណនីលើឧបករណ៍ថ្មី ឬលុបទិន្នន័យកម្មវិធីរុករករបស់អ្នក — ការប្តូររបស់សម័យប្រើប្រាស់នេះមិនរងផលប៉ះពាល់ទេ។",
+  guidedTourSectionTitle: "មគ្គុទ្ទេសក៍ណែនាំ",
+  replayGuidedTourAction: "លេងមគ្គុទ្ទេសក៍ម្តងទៀត",
+  replayGuidedTourDesc: "ចាប់ផ្តើមការណែនាំផ្ទាំងគ្រប់គ្រងឡើងវិញពីដើម។",
+  settingsSaveAction: "រក្សាទុកការផ្លាស់ប្តូរ",
+  settingsSavedToast: "ការកំណត់ត្រូវបានរក្សាទុក",
+  demoPreviewTitle: "មើលជាមុនតែប៉ុណ្ណោះ",
+  settingsDemoDesc: "ការកំណត់អាចមើលបានតែប៉ុណ្ណោះក្នុងរបៀបសាកល្បង។ ចុះឈ្មោះដើម្បីរក្សាទុកការកំណត់ផ្ទាល់ខ្លួន។",
+  onboardingDemoDesc: "អ្នកអាចចុចឆ្លងកាត់គ្រប់ជំហាន ប៉ុន្តែគ្មានអ្វីត្រូវបានរក្សាទុកក្នុងរបៀបសាកល្បងទេ។ ចុះឈ្មោះដើម្បីរៀបចំអចលនទ្រព្យផ្ទាល់ខ្លួន។",
+  close: "បិទ",
 }
 
 export const dictionaries: Record<Language, typeof en> = { en, km }

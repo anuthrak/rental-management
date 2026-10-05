@@ -17,9 +17,16 @@ import { Label } from "@/components/ui/label"
 export function MeterReadingSection({
   roomId,
   readings,
+  waterRateUsd,
+  electricRateUsd,
 }: {
   roomId: string
   readings: MeterReadingItem[]
+  // Optional so this component still renders sensibly (falling back to
+  // lib/calc.ts's stock constants) if ever mounted without them — RoomDrawer
+  // always passes the signed-in account's real rates.
+  waterRateUsd?: number
+  electricRateUsd?: number
 }) {
   const { t, locale } = useI18n()
   const simpleMode = useSimpleModeStore((s) => s.simpleMode)
@@ -135,10 +142,10 @@ export function MeterReadingSection({
                 {!simpleMode && (waterUsage !== null || electricUsage !== null) && (
                   <p className="mt-1 text-muted-foreground">
                     {waterUsage !== null &&
-                      `${formatNumber(waterUsage, locale)} m³ (${formatCurrency(waterCost(waterUsage), "USD", locale)})`}
+                      `${formatNumber(waterUsage, locale)} m³ (${formatCurrency(waterCost(waterUsage, waterRateUsd), "USD", locale)})`}
                     {waterUsage !== null && electricUsage !== null && " · "}
                     {electricUsage !== null &&
-                      `${formatNumber(electricUsage, locale)} kWh (${formatCurrency(electricCost(electricUsage), "USD", locale)})`}
+                      `${formatNumber(electricUsage, locale)} kWh (${formatCurrency(electricCost(electricUsage, electricRateUsd), "USD", locale)})`}
                   </p>
                 )}
                 {reading.notes && <p className="mt-1 text-muted-foreground">{reading.notes}</p>}

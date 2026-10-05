@@ -43,6 +43,11 @@ model User {
   defaultElectricRate Decimal  @default(0.25)
   invoiceNoteTemplate String?
   tourCompleted       Boolean  @default(false)
+  // Seeds useSimpleModeStore's initial value once per fresh browser/device
+  // (see hydrateFromAccount) — a user's later in-session manual toggles
+  // already override this via localStorage, exactly as intended by
+  // "default".
+  simpleModeDefault  Boolean  @default(false)
   // Lets an account declare floors ahead of adding rooms to them (e.g. "this
   // property has 3 floors") — floor chips in the dashboard are the union of
   // this range and whatever floors actual rooms already occupy, so lowering

@@ -21,7 +21,7 @@ export function StepSummary({
   const { t } = useI18n()
   const propertyName = useOnboardingStore((s) => s.propertyName)
   const pricingModel = useOnboardingStore((s) => s.pricingModel)
-  const standardRoomCount = useOnboardingStore((s) => s.standardRoomCount)
+  const roomsPerFloor = useOnboardingStore((s) => s.roomsPerFloor)
   const standardBaseRate = useOnboardingStore((s) => s.standardBaseRate)
   const standardWaterMeterStart = useOnboardingStore((s) => s.standardWaterMeterStart)
   const standardElectricMeterStart = useOnboardingStore((s) => s.standardElectricMeterStart)
@@ -30,7 +30,7 @@ export function StepSummary({
     () =>
       resolveRooms({
         pricingModel,
-        standardRoomCount,
+        roomsPerFloor,
         standardBaseRate,
         standardWaterMeterStart,
         standardElectricMeterStart,
@@ -38,7 +38,7 @@ export function StepSummary({
       }),
     [
       pricingModel,
-      standardRoomCount,
+      roomsPerFloor,
       standardBaseRate,
       standardWaterMeterStart,
       standardElectricMeterStart,

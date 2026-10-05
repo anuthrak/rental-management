@@ -3,6 +3,7 @@
 import { create } from "zustand"
 
 import { DEFAULT_INVOICE_NOTES } from "@/lib/invoice-notes"
+import { MAX_FLOOR_COUNT, MIN_FLOOR_COUNT } from "@/lib/rooms"
 import type { Language } from "@/lib/types"
 
 export type PricingModel = "standard" | "custom"
@@ -15,6 +16,11 @@ export type OnboardingRoom = {
   targetPrice: number
   waterMeterStart: number
   electricMeterStart: number
+  // Explicit floor, replacing reliance on deriveFloorFromRoomNumber at
+  // submit time. For the standard pricing model this is stamped by
+  // resolveRooms from roomsPerFloor; for custom rooms it's set by the
+  // per-room floor <Select> on Step 1.
+  floor: number
 }
 
 export type OnboardingTenant = {
@@ -64,25 +70,36 @@ export function createTenantDraft(roomId: string, agreedRent = 0): OnboardingTen
 }
 
 // The definitive room list for either pricing mode — standard rooms are
-// derived on the fly from count/rate rather than materialized, so there's
-// nothing to keep in sync when either input changes.
+// derived on the fly from roomsPerFloor/rate rather than materialized, so
+// there's nothing to keep in sync when either input changes. Every derived
+// room is stamped with its floor using the existing `Room {100*floor + N}`
+// numbering convention, keeping deriveFloorFromRoomNumber's inverse
+// relationship intact even though floor is now assigned explicitly.
 export function resolveRooms(state: {
   pricingModel: PricingModel
-  standardRoomCount: number
+  roomsPerFloor: number[]
   standardBaseRate: number
   standardWaterMeterStart: number
   standardElectricMeterStart: number
   customRooms: OnboardingRoom[]
 }): OnboardingRoom[] {
   if (state.pricingModel === "standard") {
-    const count = Math.max(0, Math.floor(state.standardRoomCount) || 0)
-    return Array.from({ length: count }, (_, i) => ({
-      id: `standard-${i}`,
-      roomNumber: `Room ${101 + i}`,
-      targetPrice: state.standardBaseRate,
-      waterMeterStart: state.standardWaterMeterStart,
-      electricMeterStart: state.standardElectricMeterStart,
-    }))
+    const rooms: OnboardingRoom[] = []
+    state.roomsPerFloor.forEach((countOnFloor, floorIdx) => {
+      const floor = floorIdx + 1
+      const count = Math.max(0, Math.floor(countOnFloor) || 0)
+      for (let n = 0; n < count; n++) {
+        rooms.push({
+          id: `standard-${floor}-${n}`,
+          roomNumber: `Room ${floor * 100 + n + 1}`,
+          targetPrice: state.standardBaseRate,
+          waterMeterStart: state.standardWaterMeterStart,
+          electricMeterStart: state.standardElectricMeterStart,
+          floor,
+        })
+      }
+    })
+    return rooms
   }
   return state.customRooms
 }
@@ -91,7 +108,12 @@ interface OnboardingState {
   step: number
   propertyName: string
   pricingModel: PricingModel
-  standardRoomCount: number
+  // How many floors the property has, and how many rooms are declared per
+  // floor (index i = floor i+1). Drives the Floors & Capacity step; for the
+  // standard pricing model this *is* the room count/floor assignment (see
+  // resolveRooms), for custom it's just a per-floor ceiling.
+  floorCount: number
+  roomsPerFloor: number[]
   standardBaseRate: number
   standardWaterMeterStart: number
   standardElectricMeterStart: number
@@ -109,7 +131,8 @@ interface OnboardingState {
   setStep: (step: number) => void
   setPropertyName: (name: string) => void
   setPricingModel: (model: PricingModel) => void
-  setStandardRoomCount: (count: number) => void
+  setFloorCount: (count: number) => void
+  setRoomsPerFloor: (floorIndex: number, count: number) => void
   setStandardBaseRate: (rate: number) => void
   setStandardWaterMeterStart: (value: number) => void
   setStandardElectricMeterStart: (value: number) => void
@@ -131,7 +154,10 @@ const initialState = {
   step: 0,
   propertyName: "",
   pricingModel: "standard" as PricingModel,
-  standardRoomCount: DEFAULT_STANDARD_ROOM_COUNT,
+  // Default: all 20 default rooms on floor 1 — preserves the exact
+  // single-floor UX for anyone who never touches the new Floors step.
+  floorCount: 1,
+  roomsPerFloor: [DEFAULT_STANDARD_ROOM_COUNT] as number[],
   standardBaseRate: DEFAULT_STANDARD_BASE_RATE,
   standardWaterMeterStart: 0,
   standardElectricMeterStart: 0,
@@ -151,20 +177,35 @@ export const useOnboardingStore = create<OnboardingState>()((set) => ({
   setPropertyName: (propertyName) => set({ propertyName }),
   setPricingModel: (pricingModel) => set({ pricingModel }),
 
-  setStandardRoomCount: (count) =>
+  // Resizes roomsPerFloor to match (extra floors default to 0, dropped
+  // floors' counts are discarded) and clamps every customRoom's floor down
+  // to the new ceiling — same "shrink prunes what no longer fits" pattern
+  // the old setStandardRoomCount used for tenants.
+  setFloorCount: (count) =>
     set((s) => {
-      const standardRoomCount = Math.max(0, Math.floor(count) || 0)
-      const validIds = new Set(
-        Array.from({ length: standardRoomCount }, (_, i) => `standard-${i}`),
-      )
-      return {
-        standardRoomCount,
-        // Drop any tenant assigned to a room this shrink just removed.
-        tenants:
-          s.pricingModel === "standard"
-            ? s.tenants.filter((t) => validIds.has(t.roomId))
-            : s.tenants,
+      const floorCount = Math.max(MIN_FLOOR_COUNT, Math.min(MAX_FLOOR_COUNT, Math.floor(count) || 1))
+      const roomsPerFloor = Array.from({ length: floorCount }, (_, i) => s.roomsPerFloor[i] ?? 0)
+      const customRooms = s.customRooms.map((r) => ({ ...r, floor: Math.min(r.floor, floorCount) }))
+      return { floorCount, roomsPerFloor, customRooms }
+    }),
+
+  setRoomsPerFloor: (floorIndex, count) =>
+    set((s) => {
+      if (floorIndex < 0 || floorIndex >= s.roomsPerFloor.length) return s
+      const roomsPerFloor = [...s.roomsPerFloor]
+      roomsPerFloor[floorIndex] = Math.max(0, Math.floor(count) || 0)
+      // Drop any tenant assigned to a standard room this shrink just removed.
+      let tenants = s.tenants
+      if (s.pricingModel === "standard") {
+        const validIds = new Set<string>()
+        roomsPerFloor.forEach((countOnFloor, idx) => {
+          const floor = idx + 1
+          const c = Math.max(0, Math.floor(countOnFloor) || 0)
+          for (let n = 0; n < c; n++) validIds.add(`standard-${floor}-${n}`)
+        })
+        tenants = s.tenants.filter((t) => validIds.has(t.roomId))
       }
+      return { roomsPerFloor, tenants }
     }),
 
   setStandardBaseRate: (rate) => set({ standardBaseRate: Math.max(0, rate || 0) }),
@@ -175,7 +216,14 @@ export const useOnboardingStore = create<OnboardingState>()((set) => ({
     set((s) => ({
       customRooms: [
         ...s.customRooms,
-        { id: uid(), roomNumber: "", targetPrice: 0, waterMeterStart: 0, electricMeterStart: 0 },
+        {
+          id: uid(),
+          roomNumber: "",
+          targetPrice: 0,
+          waterMeterStart: 0,
+          electricMeterStart: 0,
+          floor: 1,
+        },
       ],
     })),
 

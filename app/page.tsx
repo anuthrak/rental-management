@@ -6,6 +6,7 @@ import {
   getRooms,
   getUserCurrencyPreference,
   getUserFloorCount,
+  getUserUtilityRates,
 } from "@/lib/db/queries"
 import { getDisplayName } from "@/lib/user-display-name"
 import { GlobalStatusBar } from "@/components/global-status-bar"
@@ -20,15 +21,19 @@ export default async function DashboardPage() {
   const session = await getSession()
   const scopeUserId = session ? session.userId : null
 
-  const [rooms, metrics, currency, user, floorPlanLayouts, floorCount] = await Promise.all([
+  const [rooms, metrics, currency, user, floorPlanLayouts, floorCount, utilityRates] = await Promise.all([
     getRooms(scopeUserId),
     getDashboardMetrics(scopeUserId),
     getUserCurrencyPreference(scopeUserId),
     session
-      ? prisma.user.findUnique({ where: { id: session.userId }, select: { name: true, email: true } })
+      ? prisma.user.findUnique({
+          where: { id: session.userId },
+          select: { name: true, email: true, simpleModeDefault: true },
+        })
       : null,
     session ? getFloorPlanLayouts(session.userId) : Promise.resolve({}),
     getUserFloorCount(scopeUserId),
+    getUserUtilityRates(scopeUserId),
   ])
 
   return (
@@ -44,6 +49,9 @@ export default async function DashboardPage() {
             userId={scopeUserId}
             floorPlanLayouts={floorPlanLayouts}
             floorCount={floorCount}
+            accountWaterRate={utilityRates.waterRateUsd}
+            accountElectricRate={utilityRates.electricRateUsd}
+            simpleModeDefault={user?.simpleModeDefault ?? false}
           />
         </div>
       </main>

@@ -3,6 +3,8 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
+import { DEFAULT_FLOOR_COLS, DEFAULT_FLOOR_ROWS } from "@/lib/rooms"
+
 export interface GridCell {
   row: number
   col: number
@@ -19,7 +21,7 @@ export interface FloorPlanDimensions {
 // persist to the server.
 export type GridPositionDiff = { roomId: string; cell: GridCell | null }
 
-export const DEFAULT_DIMENSIONS: FloorPlanDimensions = { rows: 4, cols: 10 }
+export const DEFAULT_DIMENSIONS: FloorPlanDimensions = { rows: DEFAULT_FLOOR_ROWS, cols: DEFAULT_FLOOR_COLS }
 export const DEFAULT_FLOOR_COUNT = 1
 
 interface FloorPlanLayoutState {

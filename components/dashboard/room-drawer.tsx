@@ -6,19 +6,21 @@ import { Pencil, Receipt } from "lucide-react"
 import { toast } from "sonner"
 
 import type { DashboardRoom } from "@/lib/db/queries"
-import { ELECTRIC_RATE_USD, WATER_RATE_USD } from "@/lib/calc"
 import { DEFAULT_INVOICE_CATEGORIES, categoryLabel, defaultCategoryLineItem } from "@/lib/categories"
+import { DEFAULT_FLOOR_COLS, DEFAULT_FLOOR_ROWS, MIN_FLOOR_COUNT, formatFloorLabel } from "@/lib/rooms"
 import { cn } from "@/lib/utils"
 import { formatCurrency } from "@/lib/currency"
 import { formatDateDMY } from "@/lib/date"
 import { useMediaQuery } from "@/lib/use-media-query"
 import { useI18n } from "@/components/i18n-provider"
+import { dictionaries } from "@/lib/i18n"
 import { useInvoiceStore, newLineItem } from "@/store/use-invoice-store"
 import {
   assignTenant,
   createInvoiceRecord,
   endLease,
   setInvoiceStatus,
+  updateRoomFloor,
   updateRoomName,
   updateRoomTargetPrice,
 } from "@/app/actions/dashboard"
@@ -56,10 +58,22 @@ export function RoomDrawer({
   room,
   open,
   onOpenChange,
+  floorCount,
+  roomCountsByFloor = {},
+  floorCapacities = {},
+  accountWaterRate,
+  accountElectricRate,
 }: {
   room: DashboardRoom | null
   open: boolean
   onOpenChange: (open: boolean) => void
+  floorCount: number
+  // Server-sourced capacity maps (see room-grid.tsx) — not read from
+  // useFloorPlanLayoutStore, which can be stale across tabs/devices.
+  roomCountsByFloor?: Record<number, number>
+  floorCapacities?: Record<number, number>
+  accountWaterRate: number
+  accountElectricRate: number
 }) {
   const router = useRouter()
   const { t, language } = useI18n()
@@ -71,6 +85,8 @@ export function RoomDrawer({
   const [priceInput, setPriceInput] = useState("")
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState("")
+  const [editingFloor, setEditingFloor] = useState(false)
+  const [floorInput, setFloorInput] = useState("")
 
   const [fullName, setFullName] = useState("")
   const [phone, setPhone] = useState("")
@@ -88,6 +104,8 @@ export function RoomDrawer({
     setPriceInput(String(room.targetPrice))
     setEditingName(false)
     setNameInput(room.roomNumber)
+    setEditingFloor(false)
+    setFloorInput(String(room.floor))
     setFullName("")
     setPhone("")
     setAgreedRent(String(room.targetPrice))
@@ -120,11 +138,44 @@ export function RoomDrawer({
     startTransition(async () => {
       const result = await updateRoomName(activeRoom!.id, nameInput)
       if (!result.ok) {
-        toast.error(result.error)
+        // "Room number already exists" has a real translation; every other
+        // server error is shown raw (matches this file's floor-editing path
+        // below and this codebase's server-action-error convention).
+        toast.error(result.error === dictionaries.en.roomExistsError ? t("roomExistsError") : result.error)
         return
       }
       toast.success("Room name updated")
       setEditingName(false)
+    })
+  }
+
+  function handleSaveFloor() {
+    const value = Math.round(Number(floorInput))
+    if (!Number.isFinite(value) || value < MIN_FLOOR_COUNT || value > floorCount) {
+      toast.error(t("invalidRoomFloorError"))
+      return
+    }
+    // Advisory only (the server's checkFloorCapacity is authoritative) —
+    // skipped entirely for a same-floor no-op edit, since the room already
+    // occupies a slot there.
+    if (
+      value !== activeRoom!.floor &&
+      (roomCountsByFloor[value] ?? 0) >= (floorCapacities[value] ?? DEFAULT_FLOOR_ROWS * DEFAULT_FLOOR_COLS)
+    ) {
+      toast.error(t("floorFullError"))
+      return
+    }
+    startTransition(async () => {
+      const result = await updateRoomFloor(activeRoom!.id, value)
+      if (!result.ok) {
+        // updateRoomFloor doesn't currently return the room-exists error,
+        // but this stays consistent with the other call sites in case that
+        // ever changes; floor/capacity/not-found errors are shown raw.
+        toast.error(result.error === dictionaries.en.roomExistsError ? t("roomExistsError") : result.error)
+        return
+      }
+      toast.success(t("roomFloorUpdatedToast"))
+      setEditingFloor(false)
     })
   }
 
@@ -201,7 +252,7 @@ export function RoomDrawer({
               label: categoryLabel("electricity", language),
               quantity: 0,
               unit: "kW",
-              rate: ELECTRIC_RATE_USD,
+              rate: accountElectricRate,
               previousMeter: lastElectric,
               recentMeter: lastElectric,
               previousMeterLocked: true,
@@ -212,7 +263,7 @@ export function RoomDrawer({
               label: categoryLabel("water", language),
               quantity: 0,
               unit: "m³",
-              rate: WATER_RATE_USD,
+              rate: accountWaterRate,
               previousMeter: lastWater,
               recentMeter: lastWater,
               previousMeterLocked: true,
@@ -312,6 +363,65 @@ export function RoomDrawer({
                   <Pencil />
                 </Button>
               </>
+            )}
+          </div>
+          <div className="flex flex-col gap-1">
+            {editingFloor ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={MIN_FLOOR_COUNT}
+                    max={floorCount}
+                    step={1}
+                    value={floorInput}
+                    onChange={(e) => setFloorInput(e.target.value)}
+                    className="h-7 w-20"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveFloor()
+                      if (e.key === "Escape") setEditingFloor(false)
+                    }}
+                  />
+                  <Button size="sm" disabled={isPending} onClick={handleSaveFloor}>
+                    {t("saveAction")}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setEditingFloor(false)}>
+                    {t("cancel")}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t("floorSlotsUsedLabel")
+                    .replace(
+                      "{used}",
+                      String(roomCountsByFloor[Math.round(Number(floorInput)) || activeRoom.floor] ?? 0),
+                    )
+                    .replace(
+                      "{capacity}",
+                      String(
+                        floorCapacities[Math.round(Number(floorInput)) || activeRoom.floor] ??
+                          DEFAULT_FLOOR_ROWS * DEFAULT_FLOOR_COLS,
+                      ),
+                    )}
+                </p>
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  {formatFloorLabel(activeRoom.floor)}
+                </span>
+                <Button
+                  size="icon-xs"
+                  variant="ghost"
+                  aria-label={t("editRoomFloorAriaLabel")}
+                  onClick={() => {
+                    setFloorInput(String(activeRoom.floor))
+                    setEditingFloor(true)
+                  }}
+                >
+                  <Pencil />
+                </Button>
+              </div>
             )}
           </div>
         </SheetHeader>
@@ -417,7 +527,12 @@ export function RoomDrawer({
 
               <Separator />
 
-              <MeterReadingSection roomId={activeRoom.id} readings={activeRoom.meterReadings} />
+              <MeterReadingSection
+                roomId={activeRoom.id}
+                readings={activeRoom.meterReadings}
+                waterRateUsd={accountWaterRate}
+                electricRateUsd={accountElectricRate}
+              />
 
               <Separator />
 

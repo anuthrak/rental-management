@@ -18,5 +18,8 @@ node_modules
 # SQLite dev database
 prisma/dev.db
 prisma/dev.db-journal
+
+# Scratch file written by the architect agent on each /build-feature run
+.claude/TEMP_TECH_SPEC.md
 .vercel
 .env*

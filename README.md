@@ -12,7 +12,9 @@ It started out as an invoice generator (bootstrapped with `v0`) and grew into so
 - **Utility meters** — log water/electric meter readings per room and derive consumption between readings
 - **Invoices** — generate an invoice from a lease, preview it, and export it as a PDF, with a running invoice history
 - **Multi-currency** — USD and KHR (Cambodian riel), since this was built for a real building in Cambodia
-- **Onboarding wizard + guided tour** — a first-run flow that walks a new landlord through setting up their property instead of dropping them on an empty dashboard
+- **Onboarding wizard + guided tour** — a first-run flow that walks a new landlord through setting up their property (including declaring floors and rooms-per-floor up front) instead of dropping them on an empty dashboard
+- **Floor capacity** — each floor's Custom Layout grid size is a hard cap on room count, enforced server-side on both room creation and floor reassignment, not just a visual grid
+- **Account Settings** (`/settings`) — a signed-in-only page for business/property info, utility rates, invoice note template, per-floor grid capacity, a Simple Mode default, and replaying the guided tour
 - **Auth** — proper accounts (bcrypt + JWT sessions) so each landlord's data is scoped to them; there's also a shared "demo" dataset for anyone just poking around
 
 ## Stack

@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma"
 import type { InvoiceStatus, RoomStatus } from "@prisma/client"
+import { WATER_RATE_USD, ELECTRIC_RATE_USD } from "@/lib/calc"
 import { DEFAULT_INVOICE_NOTES } from "@/lib/invoice-notes"
+import { DEFAULT_FLOOR_COLS, DEFAULT_FLOOR_ROWS } from "@/lib/rooms"
 import type { Currency, Language } from "@/lib/types"
 
 // A NULL userId is the shared public demo dataset; a specific userId scopes
@@ -30,6 +32,20 @@ export async function getUserFloorCount(userId: string | null): Promise<number> 
     select: { floorCount: true },
   })
   return user?.floorCount ?? 1
+}
+
+// Highest floor number any of this account's own rooms currently occupies —
+// null when the account has no rooms yet. Combined with getUserFloorCount to
+// compute the effective ceiling for floor assignment: a floor that already
+// has a real room on it must never become unassignable just because the
+// account's declared floorCount hasn't been raised to match (see the
+// floorCount doc comment on the User model).
+export async function getMaxRoomFloor(userId: string): Promise<number | null> {
+  const result = await prisma.room.aggregate({
+    where: { userId },
+    _max: { floor: true },
+  })
+  return result._max.floor ?? null
 }
 
 // User.invoiceNoteTemplate stays NULL until an account explicitly saves one
@@ -157,6 +173,49 @@ export async function getRooms(userId?: string | null): Promise<DashboardRoom[]>
 // navigation tabs without a separate DB round trip.
 export function getFloors(rooms: DashboardRoom[]): number[] {
   return [...new Set(rooms.map((room) => room.floor))].sort((a, b) => a - b)
+}
+
+// Same guest-fallback shape as getUserCurrencyPreference/getUserFloorCount —
+// a null userId (demo/guest) has no FloorPlanLayout row to read, so it
+// always gets the shared default capacity. See the Part A spec's guest
+// capacity note in MULTI_AGENT_PLAN.md for why a guest's *custom* grid size
+// never reaches this.
+export async function getFloorCapacity(userId: string | null, floor: number): Promise<number> {
+  if (!userId) return DEFAULT_FLOOR_ROWS * DEFAULT_FLOOR_COLS
+  const layout = await prisma.floorPlanLayout.findUnique({
+    where: { userId_floor: { userId, floor } },
+    select: { rows: true, cols: true },
+  })
+  return layout ? layout.rows * layout.cols : DEFAULT_FLOOR_ROWS * DEFAULT_FLOOR_COLS
+}
+
+// Room counts grouped by floor for one account (or the shared demo dataset
+// when userId is null) — used by the Settings "Floors & Capacity" section
+// and could back a future dashboard capacity badge.
+export async function getRoomCountsByFloor(userId: string | null): Promise<Record<number, number>> {
+  const groups = await prisma.room.groupBy({
+    by: ["floor"],
+    where: getScopedData(userId),
+    _count: { _all: true },
+  })
+  return Object.fromEntries(groups.map((g) => [g.floor, g._count._all]))
+}
+
+// Same guest fallback pattern as getUserCurrencyPreference — demo mode has
+// no User row, so it gets the same hardcoded stock rates lib/calc.ts's
+// waterCost/electricCost default to.
+export async function getUserUtilityRates(
+  userId: string | null,
+): Promise<{ waterRateUsd: number; electricRateUsd: number }> {
+  if (!userId) return { waterRateUsd: WATER_RATE_USD, electricRateUsd: ELECTRIC_RATE_USD }
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { defaultWaterRate: true, defaultElectricRate: true },
+  })
+  return {
+    waterRateUsd: user?.defaultWaterRate.toNumber() ?? WATER_RATE_USD,
+    electricRateUsd: user?.defaultElectricRate.toNumber() ?? ELECTRIC_RATE_USD,
+  }
 }
 
 export type FloorPlanDimensions = { rows: number; cols: number }

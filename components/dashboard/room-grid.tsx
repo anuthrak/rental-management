@@ -6,7 +6,7 @@ import { Building2, Search } from "lucide-react"
 import type { DashboardRoom, FloorPlanDimensions } from "@/lib/db/queries"
 import { getFloors } from "@/lib/db/queries"
 import { getAttentionRooms } from "@/lib/needs-attention"
-import { formatFloorLabel } from "@/lib/rooms"
+import { DEFAULT_FLOOR_COLS, DEFAULT_FLOOR_ROWS, formatFloorLabel } from "@/lib/rooms"
 import type { Currency } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { useI18n } from "@/components/i18n-provider"
@@ -34,18 +34,25 @@ export function RoomGrid({
   userId,
   floorPlanLayouts,
   floorCount,
+  accountWaterRate,
+  accountElectricRate,
+  simpleModeDefault,
 }: {
   rooms: DashboardRoom[]
   currency: Currency
   userId: string | null
   floorPlanLayouts: Record<number, FloorPlanDimensions>
   floorCount: number
+  accountWaterRate: number
+  accountElectricRate: number
+  simpleModeDefault: boolean
 }) {
   const { t } = useI18n()
   const simpleMode = useSimpleModeStore((s) => s.simpleMode)
   const storedFloorCount = useFloorPlanLayoutStore((s) => s.floorCount)
   const syncOwner = useFloorPlanLayoutStore((s) => s.syncOwner)
   const hydrateFloorCount = useFloorPlanLayoutStore((s) => s.hydrateFloorCount)
+  const hydrateSimpleModeFromAccount = useSimpleModeStore((s) => s.hydrateFromAccount)
   const [mainTab, setMainTab] = useState<MainTab>(simpleMode ? "attention" : "all")
   const [viewMode, setViewMode] = useState<ViewMode>("standard")
   const [selectedFloor, setSelectedFloor] = useState<FloorFilter>("all")
@@ -71,6 +78,12 @@ export function RoomGrid({
   useEffect(() => {
     if (userId) hydrateFloorCount(floorCount)
   }, [userId, floorCount, hydrateFloorCount])
+  // Seeds Simple Mode from the signed-in account's saved default once per
+  // browser (see hydrateFromAccount's own guard) — guest sessions keep
+  // today's pure-localStorage behavior unchanged.
+  useEffect(() => {
+    if (userId) hydrateSimpleModeFromAccount(simpleModeDefault)
+  }, [userId, simpleModeDefault, hydrateSimpleModeFromAccount])
 
   const attentionRooms = useMemo(() => getAttentionRooms(rooms), [rooms])
 
@@ -102,6 +115,26 @@ export function RoomGrid({
     [rooms, selectedFloor],
   )
 
+  // Capacity source of truth for AddRoomCard/RoomDrawer's floor pickers —
+  // deliberately derived from the server-fetched `floorPlanLayouts` prop
+  // (not useFloorPlanLayoutStore's local/cached dimensionsByFloor, which can
+  // be stale across tabs/devices or, for a guest, never round-trip to the
+  // server at all). See Part A's capacity-enforcement spec.
+  const roomCountsByFloor = useMemo(() => {
+    const counts: Record<number, number> = {}
+    for (const room of rooms) counts[room.floor] = (counts[room.floor] ?? 0) + 1
+    return counts
+  }, [rooms])
+
+  const floorCapacities = useMemo(() => {
+    const caps: Record<number, number> = {}
+    for (const f of floors) {
+      const dims = floorPlanLayouts[f]
+      caps[f] = (dims?.rows ?? DEFAULT_FLOOR_ROWS) * (dims?.cols ?? DEFAULT_FLOOR_COLS)
+    }
+    return caps
+  }, [floors, floorPlanLayouts])
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     return floorRooms.filter((room) => {
@@ -116,6 +149,14 @@ export function RoomGrid({
   }, [floorRooms, query, tab])
 
   const selectedRoom = rooms.find((r) => r.id === selectedRoomId) ?? null
+  // floors is already the sorted union of declared range ∪ actual room
+  // floors (see the comment above its useMemo) — its last element is
+  // exactly the effective ceiling, matching resolveValidFloor's
+  // server-side calculation in the common signed-in case. floors is always
+  // non-empty in practice (declaredFloors alone spans 1..declaredCount with
+  // declaredCount >= MIN_FLOOR_COUNT) — the fallback is defensive only.
+  const resolvedFloorCount = floors.length > 0 ? floors[floors.length - 1] : (storedFloorCount ?? DEFAULT_FLOOR_COUNT)
+  const addRoomDefaultFloor = typeof selectedFloor === "number" ? selectedFloor : 1
 
   if (rooms.length === 0) {
     return (
@@ -127,7 +168,15 @@ export function RoomGrid({
           actionLabel={t("addFirstRoomAction")}
           onAction={() => setAddRoomOpen(true)}
         />
-        <AddRoomCard open={addRoomOpen} onOpenChange={setAddRoomOpen} hideTrigger />
+        <AddRoomCard
+          open={addRoomOpen}
+          onOpenChange={setAddRoomOpen}
+          hideTrigger
+          defaultFloor={addRoomDefaultFloor}
+          floorCount={resolvedFloorCount}
+          roomCountsByFloor={roomCountsByFloor}
+          floorCapacities={floorCapacities}
+        />
       </>
     )
   }
@@ -250,7 +299,12 @@ export function RoomGrid({
                     {t("noRoomsMatch")}
                   </p>
                 )}
-                <AddRoomCard />
+                <AddRoomCard
+                  defaultFloor={addRoomDefaultFloor}
+                  floorCount={resolvedFloorCount}
+                  roomCountsByFloor={roomCountsByFloor}
+                  floorCapacities={floorCapacities}
+                />
               </div>
             </>
           )}
@@ -263,6 +317,11 @@ export function RoomGrid({
         onOpenChange={(open) => {
           if (!open) setSelectedRoomId(null)
         }}
+        floorCount={resolvedFloorCount}
+        roomCountsByFloor={roomCountsByFloor}
+        floorCapacities={floorCapacities}
+        accountWaterRate={accountWaterRate}
+        accountElectricRate={accountElectricRate}
       />
     </div>
   )

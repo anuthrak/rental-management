@@ -1,28 +1,34 @@
 "use client"
 
 import { useEffect, useMemo, useTransition } from "react"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { resolveRooms, useOnboardingStore } from "@/store/use-onboarding-store"
 import { completeOnboarding, skipOnboarding } from "@/app/actions/onboarding"
+import { MAX_FLOOR_COUNT, MIN_FLOOR_COUNT } from "@/lib/rooms"
 import { useI18n } from "@/components/i18n-provider"
 import { LanguageToggle } from "@/components/language-toggle"
 import { Button } from "@/components/ui/button"
+import { DemoPreviewDialog } from "@/components/demo-preview-dialog"
 import { StepIndicator } from "@/components/onboarding/step-indicator"
 import { StepLanguage } from "@/components/onboarding/step-language"
 import { StepProperty } from "@/components/onboarding/step-property"
+import { StepFloors } from "@/components/onboarding/step-floors"
 import { StepTenants } from "@/components/onboarding/step-tenants"
 import { StepPreferences } from "@/components/onboarding/step-preferences"
 import { StepSummary } from "@/components/onboarding/step-summary"
 
-export function OnboardingWizard() {
+export function OnboardingWizard({ isDemoMode = false }: { isDemoMode?: boolean }) {
   const { t, language } = useI18n()
+  const router = useRouter()
   const syncInvoiceNoteLanguage = useOnboardingStore((s) => s.syncInvoiceNoteLanguage)
   const step = useOnboardingStore((s) => s.step)
   const setStep = useOnboardingStore((s) => s.setStep)
   const propertyName = useOnboardingStore((s) => s.propertyName)
   const pricingModel = useOnboardingStore((s) => s.pricingModel)
-  const standardRoomCount = useOnboardingStore((s) => s.standardRoomCount)
+  const floorCount = useOnboardingStore((s) => s.floorCount)
+  const roomsPerFloor = useOnboardingStore((s) => s.roomsPerFloor)
   const standardBaseRate = useOnboardingStore((s) => s.standardBaseRate)
   const standardWaterMeterStart = useOnboardingStore((s) => s.standardWaterMeterStart)
   const standardElectricMeterStart = useOnboardingStore((s) => s.standardElectricMeterStart)
@@ -31,7 +37,7 @@ export function OnboardingWizard() {
     () =>
       resolveRooms({
         pricingModel,
-        standardRoomCount,
+        roomsPerFloor,
         standardBaseRate,
         standardWaterMeterStart,
         standardElectricMeterStart,
@@ -39,7 +45,7 @@ export function OnboardingWizard() {
       }),
     [
       pricingModel,
-      standardRoomCount,
+      roomsPerFloor,
       standardBaseRate,
       standardWaterMeterStart,
       standardElectricMeterStart,
@@ -72,12 +78,24 @@ export function OnboardingWizard() {
     return true
   }
 
+  function canProceedFromStep2(): boolean {
+    if (floorCount < MIN_FLOOR_COUNT || floorCount > MAX_FLOOR_COUNT) return false
+    if (roomsPerFloor.length !== floorCount) return false
+    if (roomsPerFloor.some((n) => !Number.isFinite(n) || n < 0)) return false
+    if (pricingModel === "custom" && customRooms.some((r) => r.floor > floorCount)) return false
+    return true
+  }
+
   function handleNext() {
     if (step === 1 && !canProceedFromStep1()) {
       toast.error(t("onboardingIncompleteToast"))
       return
     }
-    setStep(Math.min(4, step + 1))
+    if (step === 2 && !canProceedFromStep2()) {
+      toast.error(t("onboardingIncompleteToast"))
+      return
+    }
+    setStep(Math.min(5, step + 1))
   }
 
   function handleBack() {
@@ -85,6 +103,12 @@ export function OnboardingWizard() {
   }
 
   function handleComplete() {
+    // Demo visitors have no account to write to — completeOnboarding would
+    // bounce them to /login, so just return them to the demo dashboard.
+    if (isDemoMode) {
+      router.push("/")
+      return
+    }
     const roomByDraftId = new Map(rooms.map((r) => [r.id, r]))
     startTransition(async () => {
       const result = await completeOnboarding({
@@ -93,9 +117,12 @@ export function OnboardingWizard() {
         waterRate,
         electricRate,
         invoiceNoteTemplate,
+        floorCount,
+        roomsPerFloor,
         rooms: rooms.map((r) => ({
           roomNumber: r.roomNumber,
           targetPrice: r.targetPrice,
+          floor: r.floor,
           waterMeterStart: r.waterMeterStart,
           electricMeterStart: r.electricMeterStart,
         })),
@@ -120,6 +147,8 @@ export function OnboardingWizard() {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 overflow-x-hidden px-4 py-6 sm:gap-6 sm:py-10">
+      {isDemoMode && <DemoPreviewDialog description={t("onboardingDemoDesc")} />}
+
       {/* Row 1: language toggle + skip */}
       <div className="flex items-center justify-between gap-2">
         <LanguageToggle />
@@ -148,9 +177,10 @@ export function OnboardingWizard() {
       <div className="flex-1">
         {step === 0 && <StepLanguage onContinue={() => setStep(1)} />}
         {step === 1 && <StepProperty />}
-        {step === 2 && <StepTenants />}
-        {step === 3 && <StepPreferences />}
-        {step === 4 && <StepSummary onComplete={handleComplete} isPending={isPending} />}
+        {step === 2 && <StepFloors />}
+        {step === 3 && <StepTenants />}
+        {step === 4 && <StepPreferences />}
+        {step === 5 && <StepSummary onComplete={handleComplete} isPending={isPending} />}
       </div>
 
       {step > 0 && (
@@ -163,7 +193,7 @@ export function OnboardingWizard() {
           >
             {t("onboardingBack")}
           </Button>
-          {step < 4 && (
+          {step < 5 && (
             <Button type="button" onClick={handleNext} className="min-h-11 flex-1 sm:flex-none">
               {t("onboardingNext")}
             </Button>

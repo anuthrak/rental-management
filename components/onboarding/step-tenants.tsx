@@ -44,7 +44,7 @@ function RequiredMark() {
 export function StepTenants() {
   const { t } = useI18n()
   const pricingModel = useOnboardingStore((s) => s.pricingModel)
-  const standardRoomCount = useOnboardingStore((s) => s.standardRoomCount)
+  const roomsPerFloor = useOnboardingStore((s) => s.roomsPerFloor)
   const standardBaseRate = useOnboardingStore((s) => s.standardBaseRate)
   const standardWaterMeterStart = useOnboardingStore((s) => s.standardWaterMeterStart)
   const standardElectricMeterStart = useOnboardingStore((s) => s.standardElectricMeterStart)
@@ -53,7 +53,7 @@ export function StepTenants() {
     () =>
       resolveRooms({
         pricingModel,
-        standardRoomCount,
+        roomsPerFloor,
         standardBaseRate,
         standardWaterMeterStart,
         standardElectricMeterStart,
@@ -61,7 +61,7 @@ export function StepTenants() {
       }),
     [
       pricingModel,
-      standardRoomCount,
+      roomsPerFloor,
       standardBaseRate,
       standardWaterMeterStart,
       standardElectricMeterStart,

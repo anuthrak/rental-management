@@ -10,6 +10,14 @@ import { AdvancedSection } from "@/components/simple-mode/advanced-section"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 
 export function StepProperty() {
@@ -19,8 +27,8 @@ export function StepProperty() {
   const setPropertyName = useOnboardingStore((s) => s.setPropertyName)
   const pricingModel = useOnboardingStore((s) => s.pricingModel)
   const setPricingModel = useOnboardingStore((s) => s.setPricingModel)
-  const standardRoomCount = useOnboardingStore((s) => s.standardRoomCount)
-  const setStandardRoomCount = useOnboardingStore((s) => s.setStandardRoomCount)
+  const floorCount = useOnboardingStore((s) => s.floorCount)
+  const roomsPerFloor = useOnboardingStore((s) => s.roomsPerFloor)
   const standardBaseRate = useOnboardingStore((s) => s.standardBaseRate)
   const setStandardBaseRate = useOnboardingStore((s) => s.setStandardBaseRate)
   const standardWaterMeterStart = useOnboardingStore((s) => s.standardWaterMeterStart)
@@ -31,6 +39,8 @@ export function StepProperty() {
   const addCustomRoom = useOnboardingStore((s) => s.addCustomRoom)
   const updateCustomRoom = useOnboardingStore((s) => s.updateCustomRoom)
   const removeCustomRoom = useOnboardingStore((s) => s.removeCustomRoom)
+
+  const totalStandardRoomCount = roomsPerFloor.reduce((a, b) => a + (Number.isFinite(b) ? b : 0), 0)
 
   return (
     <div className="flex flex-col gap-6">
@@ -99,18 +109,6 @@ export function StepProperty() {
       {pricingModel === "standard" ? (
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="roomCount">{t("numberOfRoomsField")}</Label>
-            <Input
-              id="roomCount"
-              type="number"
-              min={0}
-              step="1"
-              className="h-11 w-full"
-              value={standardRoomCount}
-              onChange={(e) => setStandardRoomCount(Number(e.target.value))}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
             <Label htmlFor="baseRate">{t("baseRateField")}</Label>
             <Input
               id="baseRate"
@@ -122,14 +120,21 @@ export function StepProperty() {
               onChange={(e) => setStandardBaseRate(Number(e.target.value))}
             />
           </div>
-          {standardRoomCount > 0 && (
-            <p className="text-sm text-muted-foreground sm:col-span-2">
-              {t("willCreateRoomsPrefix")} <strong>Room 101</strong> {t("willCreateRoomsThrough")}{" "}
-              <strong>Room {100 + standardRoomCount}</strong>, {t("willCreateRoomsSuffix")}{" "}
-              {formatCurrency(standardBaseRate, "USD")}
-              {t("perMonthSuffix")}
-            </p>
-          )}
+          <p className="text-sm text-muted-foreground sm:col-span-2">
+            {totalStandardRoomCount > 0 ? (
+              <>
+                {t("willCreateRoomsPrefix")} <strong>{totalStandardRoomCount}</strong>{" "}
+                {t("roomsCreatedLabel").toLowerCase()}
+                {floorCount > 1 && (
+                  <> ({roomsPerFloor.map((n, i) => `F${i + 1}: ${n}`).join(", ")})</>
+                )}
+                , {t("willCreateRoomsSuffix")} {formatCurrency(standardBaseRate, "USD")}
+                {t("perMonthSuffix")}
+              </>
+            ) : (
+              t("standardRoomsAcrossFloorsNote")
+            )}
+          </p>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="standardWaterMeterStart">{t("waterMeterStartField")}</Label>
             <Input
@@ -190,6 +195,28 @@ export function StepProperty() {
                         updateCustomRoom(room.id, { targetPrice: Number(e.target.value) })
                       }
                     />
+                  </div>
+                  <div className="w-24 shrink-0">
+                    <Label className="mb-1 text-xs text-muted-foreground">
+                      {t("roomFloorField")}
+                    </Label>
+                    <Select
+                      value={String(room.floor)}
+                      onValueChange={(v) => updateCustomRoom(room.id, { floor: Number(v) })}
+                    >
+                      <SelectTrigger className="h-11 w-full">
+                        <SelectValue>{() => String(room.floor)}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {Array.from({ length: floorCount }, (_, i) => i + 1).map((f) => (
+                            <SelectItem key={f} value={String(f)}>
+                              {f}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <Button
                     type="button"

@@ -2,16 +2,20 @@
 
 import { Check } from "lucide-react"
 
+import type { TranslationKey } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
+import { useI18n } from "@/components/i18n-provider"
 
-const STEPS = [
-  { number: 1, label: "Property" },
-  { number: 2, label: "Tenants" },
-  { number: 3, label: "Preferences" },
-  { number: 4, label: "Review" },
+const STEPS: { number: number; labelKey: TranslationKey }[] = [
+  { number: 1, labelKey: "propertyStepLabel" },
+  { number: 2, labelKey: "floorsStepLabel" },
+  { number: 3, labelKey: "tenantsStepLabel" },
+  { number: 4, labelKey: "preferencesStepLabel" },
+  { number: 5, labelKey: "reviewStepLabel" },
 ]
 
 export function StepIndicator({ current }: { current: number }) {
+  const { t } = useI18n()
   return (
     <ol className="flex w-full items-center">
       {STEPS.map((step, index) => {
@@ -36,7 +40,7 @@ export function StepIndicator({ current }: { current: number }) {
                   isCurrent ? "text-foreground" : "text-muted-foreground",
                 )}
               >
-                {step.label}
+                {t(step.labelKey)}
               </span>
             </div>
             {index < STEPS.length - 1 && (

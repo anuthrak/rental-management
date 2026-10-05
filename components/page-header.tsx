@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 
-import { SimpleModeToggle } from "@/components/simple-mode-toggle"
 import { LanguageToggle } from "@/components/language-toggle"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { TutorialButton } from "@/components/dashboard/tutorial-button"
@@ -28,7 +27,9 @@ export function PageHeader({
   title: string
   tagline?: string
   links?: PageHeaderLink[]
-  tutorialPageId: TutorialPageId
+  // Optional — pages with no per-page tutorial content yet (e.g. Settings)
+  // simply omit the tutorial button rather than requiring fake content.
+  tutorialPageId?: TutorialPageId
   banner?: React.ReactNode
   heroTourId?: string
 }) {
@@ -64,10 +65,9 @@ export function PageHeader({
               {link.label}
             </Link>
           ))}
-          <SimpleModeToggle />
           <LanguageToggle />
           <ThemeToggle />
-          <TutorialButton pageId={tutorialPageId} />
+          {tutorialPageId && <TutorialButton pageId={tutorialPageId} />}
         </div>
       </header>
     </div>

@@ -3,7 +3,17 @@
 import { useEffect, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
-import { ChevronRight, HelpCircle, Languages, MapPinned, Moon, Sparkles, Sun, Wand2 } from "lucide-react"
+import {
+  ChevronRight,
+  HelpCircle,
+  Languages,
+  MapPinned,
+  Moon,
+  Settings as SettingsIcon,
+  Sparkles,
+  Sun,
+  Wand2,
+} from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { LANGUAGES } from "@/lib/types"
@@ -103,6 +113,17 @@ export function MoreSheetContent({
           }}
         />
       )}
+
+      <SettingRow
+        icon={SettingsIcon}
+        title={t("navSettings")}
+        description={t("settingsPageTagline")}
+        control={<ChevronRight className="size-4 text-muted-foreground" />}
+        onClick={() => {
+          onClose()
+          router.push("/settings")
+        }}
+      />
 
       <SettingRow
         icon={Sparkles}

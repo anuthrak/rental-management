@@ -1,7 +1,6 @@
 import { PrismaClient } from "@prisma/client"
 import { PrismaLibSql } from "@prisma/adapter-libsql"
 
-import { deriveFloorFromRoomNumber } from "../lib/rooms"
 import { hashPassword } from "../lib/auth/password"
 
 const adapter = new PrismaLibSql({ url: process.env.DATABASE_URL! })
@@ -186,63 +185,80 @@ async function main() {
   console.log(`Done. rooms=${rooms} tenants=${tenants} leases=${leases} invoices=${invoices}`)
 }
 
+// 40 rooms spread across 3 floors (14/13/13) instead of one flat list, so
+// the demo dataset actually exercises the floor chips / Custom Layout view
+// out of the box instead of dumping every room onto floor 1.
+const DEMO_ROOMS_PER_FLOOR = [14, 13, 13]
+
 async function seedDemoRooms() {
-  for (let i = 1; i <= 40; i++) {
-    const roomNumber = `Room ${100 + i}`
-    const targetPrice = randomPrice()
-    const status = pickStatus()
+  // Clamped to today's day-of-month so "this month"'s due date is always in
+  // the past relative to whenever the seed happens to run — otherwise, on
+  // an early-month run (e.g. the 1st-4th), a fixed day-5 due date would sit
+  // in the future and every unpaid invoice would silently fail to read as
+  // overdue until the 5th actually arrived, leaving the Overdue KPIs at $0.
+  const thisMonthDueDay = Math.min(5, new Date().getDate())
 
-    const room = await prisma.room.create({
-      data: { roomNumber, floor: deriveFloorFromRoomNumber(roomNumber), targetPrice, status },
-    })
+  for (let floorIdx = 0; floorIdx < DEMO_ROOMS_PER_FLOOR.length; floorIdx++) {
+    const floor = floorIdx + 1
+    const roomsOnFloor = DEMO_ROOMS_PER_FLOOR[floorIdx]
 
-    if (status !== "OCCUPIED") continue
+    for (let n = 1; n <= roomsOnFloor; n++) {
+      const roomNumber = `Room ${floor * 100 + n}`
+      const targetPrice = randomPrice()
+      const status = pickStatus()
 
-    const agreedRent = targetPrice - (Math.random() < 0.5 ? 0 : Math.round(Math.random() * 20))
-    const startDate = monthsAgo(3 + Math.floor(Math.random() * 9))
+      const room = await prisma.room.create({
+        data: { roomNumber, floor, targetPrice, status },
+      })
 
-    const tenant = await prisma.tenant.create({
-      data: {
-        fullName: randomTenantName(),
-        phone: randomPhone(),
-        roomId: room.id,
-      },
-    })
+      if (status !== "OCCUPIED") continue
 
-    const lease = await prisma.lease.create({
-      data: {
-        roomId: room.id,
-        tenantId: tenant.id,
-        agreedRent,
-        startDate,
-        isActive: true,
-      },
-    })
+      const agreedRent = targetPrice - (Math.random() < 0.5 ? 0 : Math.round(Math.random() * 20))
+      const startDate = monthsAgo(3 + Math.floor(Math.random() * 9))
 
-    // Last month: paid. This month: a mix of paid / unpaid (overdue once due date has passed).
-    const lastMonthDue = monthsAgo(1, 5)
-    await prisma.invoice.create({
-      data: {
-        roomId: room.id,
-        tenantId: tenant.id,
-        leaseId: lease.id,
-        amountDue: agreedRent,
-        dueDate: lastMonthDue,
-        status: "PAID",
-      },
-    })
+      const tenant = await prisma.tenant.create({
+        data: {
+          fullName: randomTenantName(),
+          phone: randomPhone(),
+          roomId: room.id,
+        },
+      })
 
-    const thisMonthDue = monthsAgo(0, 5)
-    await prisma.invoice.create({
-      data: {
-        roomId: room.id,
-        tenantId: tenant.id,
-        leaseId: lease.id,
-        amountDue: agreedRent,
-        dueDate: thisMonthDue,
-        status: Math.random() < 0.55 ? "PAID" : "UNPAID",
-      },
-    })
+      const lease = await prisma.lease.create({
+        data: {
+          roomId: room.id,
+          tenantId: tenant.id,
+          agreedRent,
+          startDate,
+          isActive: true,
+        },
+      })
+
+      // Last month: paid. This month: a mix of paid / unpaid (overdue once due date has passed).
+      const lastMonthDue = monthsAgo(1, 5)
+      await prisma.invoice.create({
+        data: {
+          roomId: room.id,
+          tenantId: tenant.id,
+          leaseId: lease.id,
+          amountDue: agreedRent,
+          dueDate: lastMonthDue,
+          status: "PAID",
+        },
+      })
+
+      const thisMonthDue = monthsAgo(0, thisMonthDueDay)
+      await prisma.invoice.create({
+        data: {
+          roomId: room.id,
+          tenantId: tenant.id,
+          leaseId: lease.id,
+          amountDue: agreedRent,
+          dueDate: thisMonthDue,
+          status: Math.random() < 0.55 ? "PAID" : "UNPAID",
+        },
+      })
+    }
   }
 }
 

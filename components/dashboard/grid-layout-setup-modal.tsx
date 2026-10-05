@@ -1,12 +1,18 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { LayoutGrid } from "lucide-react"
+import { Building2, LayoutGrid } from "lucide-react"
 import { toast } from "sonner"
 
 import { useI18n } from "@/components/i18n-provider"
 import { resetFloorPlanLayout, setFloorPlanDimensions, setFloorCount as setFloorCountAction } from "@/app/actions/floor-plan"
-import { formatFloorLabel } from "@/lib/rooms"
+import {
+  MAX_FLOOR_COUNT,
+  MAX_GRID_DIMENSION,
+  MIN_FLOOR_COUNT,
+  MIN_GRID_DIMENSION,
+  formatFloorLabel,
+} from "@/lib/rooms"
 import {
   DEFAULT_DIMENSIONS,
   DEFAULT_FLOOR_COUNT,
@@ -34,11 +40,10 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
-const MIN_DIMENSION = 1
-const MAX_DIMENSION = 20
-const MIN_FLOOR_COUNT = 1
-const MAX_FLOOR_COUNT = 50
+const MIN_DIMENSION = MIN_GRID_DIMENSION
+const MAX_DIMENSION = MAX_GRID_DIMENSION
 
 export function GridLayoutSetupModal({ floor, userId }: { floor: number; userId: string | null }) {
   const { t } = useI18n()
@@ -135,10 +140,22 @@ export function GridLayoutSetupModal({ floor, userId }: { floor: number; userId:
 
   return (
     <>
-      <Button type="button" variant="outline" size="sm" onClick={() => handleOpenChange(true)}>
-        <LayoutGrid />
-        <span className="sr-only sm:not-sr-only">{t("setUpGridLayoutAction")}</span>
-      </Button>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              aria-label={t("setUpGridLayoutAction")}
+              onClick={() => handleOpenChange(true)}
+            >
+              <LayoutGrid />
+            </Button>
+          }
+        />
+        <TooltipContent>{t("setUpGridLayoutAction")}</TooltipContent>
+      </Tooltip>
 
       <Sheet open={open} onOpenChange={handleOpenChange}>
         <SheetContent side="center">
@@ -146,9 +163,10 @@ export function GridLayoutSetupModal({ floor, userId }: { floor: number; userId:
             <SheetTitle>{t("setUpGridLayoutTitle")}</SheetTitle>
             <SheetDescription>{t("setUpGridLayoutDesc")}</SheetDescription>
           </SheetHeader>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5 px-4 pb-4">
-            <div className="flex flex-col gap-3">
-              <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4 px-4 pb-4">
+            <div className="flex flex-col gap-3 rounded-xl border border-border bg-muted/30 p-4">
+              <p className="flex items-center gap-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                <LayoutGrid className="size-3.5" />
                 {t("gridSizeSectionLabel")} — {formatFloorLabel(floor)}
               </p>
               <div className="grid grid-cols-2 gap-3">
@@ -179,22 +197,25 @@ export function GridLayoutSetupModal({ floor, userId }: { floor: number; userId:
               </div>
             </div>
 
-            <div className="flex flex-col gap-1.5 border-t border-border pt-4">
-              <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            <div className="flex flex-col gap-1.5 rounded-xl border border-border bg-muted/30 p-4">
+              <p className="flex items-center gap-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                <Building2 className="size-3.5" />
                 {t("propertySectionLabel")}
               </p>
-              <Label htmlFor="floor-count">{t("floorCountField")}</Label>
-              <Input
-                id="floor-count"
-                type="number"
-                min={MIN_FLOOR_COUNT}
-                max={MAX_FLOOR_COUNT}
-                step={1}
-                value={floors}
-                onChange={(e) => setFloors(e.target.value)}
-                className="max-w-32"
-              />
               <p className="text-xs text-muted-foreground">{t("floorCountHelp")}</p>
+              <div className="flex flex-col gap-1.5 pt-1">
+                <Label htmlFor="floor-count">{t("floorCountField")}</Label>
+                <Input
+                  id="floor-count"
+                  type="number"
+                  min={MIN_FLOOR_COUNT}
+                  max={MAX_FLOOR_COUNT}
+                  step={1}
+                  value={floors}
+                  onChange={(e) => setFloors(e.target.value)}
+                  className="max-w-32"
+                />
+              </div>
             </div>
 
             <Button type="submit" className="min-h-11">

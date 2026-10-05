@@ -42,6 +42,7 @@ export async function setFloorCount(count: number) {
 
   await prisma.user.update({ where: { id: session.userId }, data: { floorCount: count } })
   revalidatePath("/")
+  revalidatePath("/settings")
 }
 
 export async function setFloorPlanDimensions(floor: number, rows: number, cols: number) {
@@ -54,6 +55,7 @@ export async function setFloorPlanDimensions(floor: number, rows: number, cols: 
     update: { rows, cols },
   })
   revalidatePath("/")
+  revalidatePath("/settings")
 }
 
 // Clears every room's grid position on this floor and removes the custom
