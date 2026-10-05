@@ -11,6 +11,10 @@
 //   node scripts/deploy-migrations.mjs
 //
 // Then delete .env.production.local (it holds a live secret).
+//
+// Also runs automatically on every Vercel deploy via package.json's
+// "vercel-build" script (with --vercel-build), before `next build` — a
+// failed migration fails the build, so the previous deployment stays live.
 import { createClient } from "@libsql/client"
 import { existsSync, readFileSync, readdirSync } from "node:fs"
 import { dirname, join } from "node:path"
@@ -31,6 +35,13 @@ function loadDatabaseUrl() {
     if (match) return match[1].trim()
   }
   return null
+}
+
+// Only production deploys migrate. Preview builds may share production's
+// DATABASE_URL, and an unmerged branch must never alter the live schema.
+if (process.argv.includes("--vercel-build") && process.env.VERCEL_ENV !== "production") {
+  console.log(`Skipping migrations (VERCEL_ENV=${process.env.VERCEL_ENV ?? "unset"}).`)
+  process.exit(0)
 }
 
 const url = loadDatabaseUrl()
